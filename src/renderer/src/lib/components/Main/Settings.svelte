@@ -67,10 +67,10 @@
       <span class="text-[13px] opacity-60 font-medium">Settings</span>
     </div>
 
-    <div class="flex flex-col gap-0.5 px-2">
+    <div class="flex flex-col gap-0.5 px-1">
       {#each tabs as tab}
         <button
-          class="flex items-center gap-2 px-2.5 py-[6px] rounded-xl text-[12px] transition bg-transparent border-none text-[#fafafa] text-left w-full {settingsTab ===
+          class="flex items-center gap-2 px-2.5 py-[6px] rounded-2xl text-[12px] transition bg-transparent border-none text-[#fafafa] text-left w-full {settingsTab ===
           tab.id
             ? 'bg-white/[0.08] opacity-90'
             : 'opacity-40 hover:opacity-70 hover:bg-white/[0.03]'}"
@@ -110,11 +110,7 @@
           stroke="currentColor"
           stroke-width="2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -122,7 +118,6 @@
     {#if settingsTab}
       <div class="flex-1 overflow-y-auto px-8 py-4">
         {#if settingsTab === 'general'}
-
           <div class="flex flex-col divide-y divide-white/[0.04]">
             <div class="py-4 flex items-center justify-between">
               <div>
@@ -253,7 +248,6 @@
             </div>
           </div>
         {:else if settingsTab === 'connections'}
-
           <div class="flex flex-col divide-y divide-white/[0.04]">
             {#each $connections as conn}
               <div class="py-3 flex items-center justify-between">
@@ -298,7 +292,6 @@
             {/if}
           </div>
         {:else if settingsTab === 'about'}
-
           <div class="flex flex-col divide-y divide-white/[0.04]">
             <div class="py-4 flex items-center justify-between">
               <div class="text-[13px] opacity-70">Version</div>

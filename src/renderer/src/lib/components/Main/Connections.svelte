@@ -345,7 +345,7 @@
         <div class="fixed inset-0 z-40" onclick={() => (settingsOpen = false)}></div>
 
         <div
-          class="absolute bottom-12 left-2 right-2 z-50 bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-2xl py-1.5 overflow-hidden"
+          class="absolute bottom-12 left-2 right-2 z-50 bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
           in:fly={{ y: 8, duration: 150 }}
           out:fade={{ duration: 100 }}
         >
@@ -354,9 +354,9 @@
             <div class="text-[10px] opacity-20 mt-0.5">{$appInfo?.version ?? ''}</div>
           </div>
 
-          <div class="py-1">
+          <div class="py-1 px-1.5">
             <button
-              class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.05] transition bg-transparent border-none text-[#fafafa]"
+              class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
               onclick={() => {
                 settingsOpen = false
                 onOpenSettings()
@@ -384,7 +384,7 @@
             </button>
 
             <button
-              class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.05] transition bg-transparent border-none text-[#fafafa]"
+              class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
               onclick={openGithub}
             >
               <svg
