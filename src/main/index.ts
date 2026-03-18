@@ -66,8 +66,8 @@ function createMainWindow(show = true): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 560,
-    minWidth: 600,
-    minHeight: 400,
+    minWidth: 900,
+    minHeight: 560,
     icon: path.join(__dirname, 'assets/icon.png'),
     show: false,
     titleBarStyle: process.platform === 'win32' ? 'default' : 'hidden',
@@ -126,8 +126,8 @@ function createContentWindow(url: string, connectionId: string): BrowserWindow {
   contentWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 600,
-    minHeight: 400,
+    minWidth: 900,
+    minHeight: 560,
     icon: path.join(__dirname, 'assets/icon.png'),
     show: false,
     titleBarStyle: process.platform === 'win32' ? 'default' : 'hidden',

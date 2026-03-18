@@ -135,8 +135,8 @@ const getArchString = () => {
 
 const generateDownloadUrl = () => {
   const baseUrl = 'https://github.com/astral-sh/python-build-standalone/releases/download'
-  const releaseDate = '20250723'
-  const pythonVersion = '3.11.13'
+  const releaseDate = '20260310'
+  const pythonVersion = '3.12.12'
   const archString = getArchString()
   const platformString = getPlatformString()
   const filename = `cpython-${pythonVersion}+${releaseDate}-${archString}-${platformString}-install_only.tar.gz`
