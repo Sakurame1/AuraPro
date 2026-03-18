@@ -213,6 +213,11 @@
   "settings.inference.redownload": "Volver a descargar",
   "settings.inference.variantDefaultMetal": "Predeterminado (Metal)",
   "settings.inference.variantCPU": "CPU",
+  "settings.inference.checkForUpdates": "Buscar actualizaciones",
+  "settings.inference.checking": "Buscando…",
+  "settings.inference.updateAvailable": "Actualización disponible: {{version}}",
+  "settings.inference.upToDate": "Al día",
+  "settings.inference.updating": "Actualizando…",
 
   "settings.models.downloadedModels": "Modelos descargados",
   "settings.models.noModels": "Aún no se han descargado modelos",

@@ -63,7 +63,9 @@ import {
   getLlamaCppInfo,
   getLlamaCppLog,
   getLlamaCppPty,
-  validateLlamaCppProcess
+  validateLlamaCppProcess,
+  checkLlamaCppUpdate,
+  updateLlamaCpp
 } from './utils/llamacpp'
 
 import {
@@ -919,6 +921,31 @@ if (!gotTheLock) {
 
     ipcMain.handle('notification', async (_event, { title, body }) => {
       new Notification({ title, body }).show()
+    })
+
+    ipcMain.handle('llamacpp:check-update', async () => {
+      try {
+        return await checkLlamaCppUpdate()
+      } catch (error) {
+        log.error('Failed to check llamacpp update:', error)
+        throw error
+      }
+    })
+
+    ipcMain.handle('llamacpp:update', async () => {
+      try {
+        sendToRenderer('status:llamacpp', 'setting-up')
+        const result = await updateLlamaCpp((status) => {
+          sendToRenderer('status:llamacpp-setup', status)
+        })
+        sendToRenderer('status:llamacpp', 'ready')
+        return result
+      } catch (error) {
+        log.error('Failed to update llamacpp:', error)
+        sendToRenderer('status:llamacpp', 'failed')
+        sendToRenderer('error', { message: `llamacpp update failed: ${error?.message}` })
+        throw error
+      }
     })
 
     // ─── Startup ──────────────────────────────────────

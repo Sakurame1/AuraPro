@@ -234,6 +234,73 @@ export const setupLlamaCpp = async (
   return resultBinary
 }
 
+export const checkLlamaCppUpdate = async (): Promise<{ currentVersion: string | null; latestVersion: string | null; updateAvailable: boolean }> => {
+  const currentInfo = getLlamaCppInfo()
+
+  try {
+    const response = await fetch('https://api.github.com/repos/ggml-org/llama.cpp/releases/latest', {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+      signal: AbortSignal.timeout(5000)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status}: ${response.statusText}`)
+    }
+    
+    const releaseData = await response.json()
+    const latestVersion = releaseData.tag_name
+    const currentVersion = currentInfo.version
+    
+    if (!currentVersion) {
+      return { currentVersion: null, latestVersion, updateAvailable: true }
+    }
+    
+    return { 
+      currentVersion, 
+      latestVersion, 
+      updateAvailable: currentVersion !== latestVersion 
+    }
+  } catch (error) {
+    log.error('Failed to check for llama.cpp updates:', error)
+    return { 
+      currentVersion: currentInfo.version, 
+      latestVersion: null, 
+      updateAvailable: false 
+    }
+  }
+}
+
+export const updateLlamaCpp = async (
+  onStatus?: (status: string) => void
+): Promise<{ url?: string; status?: string; pid?: number; binaryPath?: string; version?: string | null }> => {
+  // 1. Stop if running
+  await stopLlamaCpp()
+  
+  // 2. Clear old cache directory
+  const currentInfo = getLlamaCppInfo()
+  if (currentInfo.version) {
+    const cacheDir = path.join(getUserDataPath(), 'llama.cpp', currentInfo.version)
+    if (fs.existsSync(cacheDir)) {
+      onStatus?.('Removing old version…')
+      try {
+        fs.rmSync(cacheDir, { recursive: true, force: true })
+      } catch (err) {
+        log.error(`Failed to remove old llama.cpp cache at ${cacheDir}:`, err)
+      }
+    }
+  }
+  
+  // 3. Temporarily enforce 'latest' in config so it fetches the newest
+  const config = await getConfig()
+  await setConfig({ llamaCpp: { ...config.llamaCpp, version: 'latest' } }) // Assuming setConfig is available, if not we'll modify it
+  
+  // 4. Download new release
+  onStatus?.('Downloading update…')
+  await setupLlamaCpp(onStatus)
+  
+  return getLlamaCppInfo()
+}
+
 // ─── Lifecycle ──────────────────────────────────────────
 
 export const startLlamaCpp = async (

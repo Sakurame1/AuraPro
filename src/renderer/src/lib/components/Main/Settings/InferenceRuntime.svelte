@@ -12,6 +12,11 @@
   let loaded = $state(false)
   let setupStatus = $state('')
 
+  type UpdateStatus = 'idle' | 'checking' | 'available' | 'updating' | 'up-to-date' | 'error'
+  let updateStatus = $state<UpdateStatus>('idle')
+  let updateInfo = $state<{ currentVersion: string | null; latestVersion: string | null; updateAvailable: boolean } | null>(null)
+  let updateError = $state<string | null>(null)
+
 
   onMount(async () => {
     lsInfo = await window.electronAPI.getLlamaCppInfo()
@@ -108,6 +113,31 @@
       console.error('Failed to restart llama-server:', e)
     }
     restarting = false
+  }
+
+  const checkUpdate = async () => {
+    updateStatus = 'checking'
+    updateError = null
+    try {
+      const res = await window.electronAPI.checkLlamaCppUpdate()
+      updateInfo = res
+      updateStatus = res.updateAvailable ? 'available' : 'up-to-date'
+    } catch (e: any) {
+      updateStatus = 'error'
+      updateError = e?.message ?? 'Check failed'
+    }
+  }
+
+  const doUpdate = async () => {
+    updateStatus = 'updating'
+    try {
+      lsInfo = await window.electronAPI.updateLlamaCpp()
+      updateStatus = 'idle'
+      updateInfo = null
+    } catch (e: any) {
+      updateStatus = 'error'
+      updateError = e?.message ?? 'Update failed'
+    }
   }
 
   const downloadModel = async () => {
@@ -265,6 +295,60 @@
       </div>
     </div>
   {/if}
+
+  <!-- Update Section -->
+  <div class="py-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-[13px] opacity-70">{$i18n.t('settings.about.softwareUpdate')}</div>
+        {#if updateStatus === 'up-to-date'}
+          <div class="text-[11px] opacity-25 mt-0.5">{$i18n.t('settings.inference.upToDate')}</div>
+        {:else if updateStatus === 'available' && updateInfo?.latestVersion}
+          <div class="text-[11px] opacity-40 mt-0.5">{$i18n.t('settings.inference.updateAvailable', { version: updateInfo.latestVersion })}</div>
+        {:else if updateStatus === 'updating'}
+          <div class="text-[11px] opacity-25 mt-0.5">{$i18n.t('settings.inference.updating')}</div>
+        {:else if updateStatus === 'error'}
+          <div class="text-[11px] text-red-400/60 mt-0.5">{updateError}</div>
+        {/if}
+      </div>
+
+      <div>
+        {#if updateStatus === 'idle' || updateStatus === 'up-to-date' || updateStatus === 'error'}
+          <button
+            class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
+            onclick={checkUpdate}
+          >
+            {$i18n.t('settings.inference.checkForUpdates')}
+          </button>
+        {:else if updateStatus === 'checking'}
+          <button
+            class="text-[12px] opacity-30 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl pointer-events-none flex items-center gap-1.5"
+            disabled
+          >
+            <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+            </svg>
+            {$i18n.t('settings.inference.checking')}
+          </button>
+        {:else if updateStatus === 'available'}
+          <button
+            class="text-[12px] opacity-50 hover:opacity-80 px-3 py-1.5 bg-black/[0.06] dark:bg-white/[0.08] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
+            onclick={doUpdate}
+          >
+            {$i18n.t('common.update')}
+          </button>
+        {:else if updateStatus === 'updating'}
+          <button
+            class="text-[12px] opacity-30 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl pointer-events-none flex items-center gap-1.5"
+            disabled
+          >
+            <div class="w-2.5 h-2.5 rounded-full border-2 border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
+            {$i18n.t('common.updating')}
+          </button>
+        {/if}
+      </div>
+    </div>
+  </div>
 
   <!-- Start on Launch -->
   <div class="py-4 flex items-center justify-between">

@@ -213,6 +213,11 @@
   "settings.inference.redownload": "再ダウンロード",
   "settings.inference.variantDefaultMetal": "デフォルト (Metal)",
   "settings.inference.variantCPU": "CPU",
+  "settings.inference.checkForUpdates": "アップデートを確認",
+  "settings.inference.checking": "確認中…",
+  "settings.inference.updateAvailable": "アップデート可能: {{version}}",
+  "settings.inference.upToDate": "最新です",
+  "settings.inference.updating": "アップデート中…",
 
   "settings.models.downloadedModels": "ダウンロード済みモデル",
   "settings.models.noModels": "まだモデルがダウンロードされていません",

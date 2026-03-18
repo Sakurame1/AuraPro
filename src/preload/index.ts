@@ -170,6 +170,8 @@ const api = {
       activeLsCppPtyPort = null
     }
   },
+  checkLlamaCppUpdate: () => ipcRenderer.invoke('llamacpp:check-update'),
+  updateLlamaCpp: () => ipcRenderer.invoke('llamacpp:update'),
 
   // Hugging Face models
   listHfModels: () => ipcRenderer.invoke('huggingface:models:list'),

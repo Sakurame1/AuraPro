@@ -213,6 +213,11 @@
   "settings.inference.redownload": "重新下載",
   "settings.inference.variantDefaultMetal": "預設 (Metal)",
   "settings.inference.variantCPU": "CPU",
+  "settings.inference.checkForUpdates": "檢查更新",
+  "settings.inference.checking": "檢查中…",
+  "settings.inference.updateAvailable": "有可用更新：{{version}}",
+  "settings.inference.upToDate": "已是最新版本",
+  "settings.inference.updating": "更新中…",
 
   "settings.models.downloadedModels": "已下載的模型",
   "settings.models.noModels": "尚未下載任何模型",
