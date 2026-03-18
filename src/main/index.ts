@@ -585,7 +585,8 @@ if (!gotTheLock) {
     ipcMain.handle('app:info', () => ({
       version: app.getVersion(),
       platform: process.platform,
-      arch: process.arch
+      arch: process.arch,
+      username: require('os').userInfo().username
     }))
 
     ipcMain.handle('app:defaultDataPath', () => {

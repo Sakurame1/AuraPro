@@ -39,6 +39,7 @@
   let settingsOpen = $state(false)
   let connectedUrl = $state('')
   let activeConnectionId = $state('')
+  let connectingId = $state('')
   let openConnections: Map<string, string> = $state(new Map())
   let localInstalled = $state(false)
 
@@ -180,13 +181,18 @@
       view = 'connected'
       return
     }
-    const result = await window.electronAPI.connectTo(id)
-    if (result?.url) {
-      openConnections.set(result.connectionId, result.url)
-      openConnections = new Map(openConnections) // trigger reactivity
-      connectedUrl = result.url
-      activeConnectionId = result.connectionId
-      view = 'connected'
+    connectingId = id
+    try {
+      const result = await window.electronAPI.connectTo(id)
+      if (result?.url) {
+        openConnections.set(result.connectionId, result.url)
+        openConnections = new Map(openConnections) // trigger reactivity
+        connectedUrl = result.url
+        activeConnectionId = result.connectionId
+        view = 'connected'
+      }
+    } finally {
+      connectingId = ''
     }
   }
 
@@ -518,6 +524,7 @@
   {#if sidebarOpen}
     <Sidebar
       {activeConnectionId}
+      {connectingId}
       {localConn}
       {localInstalled}
       {remoteConnections}
@@ -548,6 +555,7 @@
     {sidebarOpen}
     bind:view
     {activeConnectionId}
+    {connectingId}
     {openConnections}
     {localConn}
     {localInstalled}

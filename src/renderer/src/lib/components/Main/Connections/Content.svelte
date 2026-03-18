@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import { fade, fly } from 'svelte/transition'
   import { connections, config, serverInfo, appState } from '../../../stores'
   import i18n from '../../../i18n'
@@ -9,6 +10,7 @@
     sidebarOpen: boolean
     view: string
     activeConnectionId: string
+    connectingId: string
     openConnections: Map<string, string>
     localConn: any
     localInstalled: boolean
@@ -34,6 +36,7 @@
     sidebarOpen,
     view,
     activeConnectionId,
+    connectingId,
     openConnections,
     localConn,
     localInstalled,
@@ -67,10 +70,61 @@
       : null
   )
   let copied = $state(false)
+
+  // Track webview loading per connection
+  let webviewLoading: Map<string, boolean> = $state(new Map())
+
+  // Server is starting up (local)
+  const serverStarting = $derived(
+    localConn && localInstalled && (
+      $serverInfo?.status === 'starting' ||
+      ($serverInfo?.status === 'running' && !$serverInfo?.reachable)
+    )
+  )
+
+  const isLoading = $derived(
+    connectingId !== '' ||
+    serverStarting ||
+    (view === 'connected' && activeConnectionId && (webviewLoading.get(activeConnectionId) ?? true))
+  )
+
+  // Attach load event listeners to webviews
+  onMount(() => {
+    const observer = new MutationObserver(() => {
+      const container = document.querySelector('.content-webview-container')
+      if (!container) return
+      const webviews = container.querySelectorAll('webview')
+      webviews.forEach((wv: any) => {
+        if (wv._loadListenerAttached) return
+        wv._loadListenerAttached = true
+        const connId = wv.getAttribute('partition')?.replace('persist:connection-', '') ?? ''
+        if (!connId) return
+
+        // Mark loading when navigation starts
+        wv.addEventListener('did-start-loading', () => {
+          webviewLoading.set(connId, true)
+          webviewLoading = new Map(webviewLoading)
+        })
+
+        // Clear loading when done
+        wv.addEventListener('did-stop-loading', () => {
+          webviewLoading.set(connId, false)
+          webviewLoading = new Map(webviewLoading)
+        })
+      })
+    })
+
+    const target = document.querySelector('.content-webview-container')
+    if (target) {
+      observer.observe(target, { childList: true, subtree: true })
+    }
+
+    return () => observer.disconnect()
+  })
 </script>
 
 <div
-  class="flex-1 flex flex-col min-w-0 overflow-clip bg-[#eee] dark:bg-[#111] border-t {sidebarOpen
+  class="flex-1 flex flex-col min-w-0 overflow-clip bg-[#eee] dark:bg-[#111] border-t relative content-webview-container {sidebarOpen
     ? 'border-l border-black/[0.08] dark:border-white/[0.08] rounded-tl-xl'
     : 'border-black/[0.08] dark:border-white/[0.10]'}"
 >
@@ -84,6 +138,16 @@
       partition="persist:connection-{connId}"
     ></webview>
   {/each}
+
+  <!-- Loading overlay for webview -->
+  {#if isLoading}
+    <div class="absolute inset-0 z-10 flex items-center justify-center bg-[#eee] dark:bg-[#111]" transition:fade={{ duration: 200 }}>
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-6 h-6 rounded-full border-2 border-black/10 dark:border-white/15 border-t-black/50 dark:border-t-white/50 animate-spin"></div>
+        <span class="text-[11px] opacity-30">{$i18n.t('common.loading')}</span>
+      </div>
+    </div>
+  {/if}
 
   {#if view === 'logs'}
     <!-- Terminal / Logs -->

@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { appInfo } from '../../../stores'
   import i18n from '../../../i18n'
+  import logoImage from '../../../assets/images/splash-dark.png'
 
   let openWebuiVersion = $state<string | null>(null)
   let openTerminalVersion = $state<string | null>(null)
@@ -18,6 +19,109 @@
   let changelogOpen = $state(false)
   let changelogLoading = $state(false)
   let changelogEntries = $state<{ version: string; date: string; body: string }[]>([])
+
+  // ── Easter Egg ────────────────────────────────────────
+  let clickCount = $state(0)
+  let clickTimer: ReturnType<typeof setTimeout> | null = null
+  let easterEggActive = $state(false)
+  let dismissTimer: ReturnType<typeof setTimeout> | null = null
+  let showReveal = $state(false)
+  let typewriterText = $state('')
+  let showTypewriter = $state(false)
+  let typewriterTimers: ReturnType<typeof setTimeout>[] = []
+
+
+  const handleVersionClick = () => {
+    clickCount++
+    if (clickTimer) clearTimeout(clickTimer)
+    clickTimer = setTimeout(() => { clickCount = 0 }, 800)
+
+    if (clickCount >= 7) {
+      clickCount = 0
+      if (clickTimer) clearTimeout(clickTimer)
+      activateEasterEgg()
+    }
+  }
+
+  const activateEasterEgg = () => {
+    easterEggActive = true
+    showReveal = false
+    showTypewriter = true
+    typewriterText = ''
+
+    // Go fullscreen
+    document.documentElement.requestFullscreen?.().catch(() => {})
+
+    // Full Matrix intro sequence
+    const username = $appInfo?.username ?? 'Neo'
+    const lines = [
+      `Wake up, ${username}...`,
+      'The Matrix has you...',
+      'Follow the white rabbit.',
+      `Knock, knock, ${username}.`
+    ]
+
+    let lineIdx = 0
+    const typeLine = () => {
+      if (lineIdx >= lines.length) {
+        // All lines done — show logo with knock sound
+        showTypewriter = false
+        typewriterTimers.push(setTimeout(() => {
+          showReveal = true
+        }, 800))
+        return
+      }
+      const line = lines[lineIdx]
+      let charIdx = 0
+      typewriterText = ''
+      showTypewriter = true
+
+      const typeChar = () => {
+        if (charIdx < line.length) {
+          typewriterText = line.slice(0, charIdx + 1)
+          charIdx++
+          typewriterTimers.push(setTimeout(typeChar, 140 + Math.random() * 60))
+        } else {
+          // Hold, then clear and move to next line
+          typewriterTimers.push(setTimeout(() => {
+            typewriterText = ''
+            showTypewriter = false
+            lineIdx++
+            typewriterTimers.push(setTimeout(typeLine, 600))
+          }, 1800))
+        }
+      }
+      typewriterTimers.push(setTimeout(typeChar, 400))
+    }
+
+    typewriterTimers.push(setTimeout(typeLine, 1200))
+
+    // Auto-dismiss after 25 seconds
+    dismissTimer = setTimeout(() => dismissEasterEgg(), 25000)
+  }
+
+  const dismissEasterEgg = () => {
+    showReveal = false
+    showTypewriter = false
+    typewriterText = ''
+    typewriterTimers.forEach(t => clearTimeout(t))
+    typewriterTimers = []
+    if (dismissTimer) {
+      clearTimeout(dismissTimer)
+      dismissTimer = null
+    }
+    // Exit fullscreen first, then remove overlay after transition
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().then(() => {
+        easterEggActive = false
+      }).catch(() => {
+        easterEggActive = false
+      })
+    } else {
+      easterEggActive = false
+    }
+  }
+
 
   onMount(async () => {
     openWebuiVersion = await window.electronAPI.getPackageVersion('open-webui')
@@ -56,6 +160,12 @@
           break
       }
     })
+  })
+
+  onDestroy(() => {
+    if (dismissTimer) clearTimeout(dismissTimer)
+    if (clickTimer) clearTimeout(clickTimer)
+    typewriterTimers.forEach(t => clearTimeout(t))
   })
 
   const openRelease = (repo: string, version: string, prefix = 'v') => {
@@ -130,10 +240,13 @@
 </script>
 
 <div class="flex flex-col divide-y divide-white/[0.04]">
-  <div class="py-4 flex items-center justify-between">
+  <button
+    class="w-full py-4 flex items-center justify-between bg-transparent border-none cursor-default text-[#1d1d1f] dark:text-[#fafafa]"
+    onclick={handleVersionClick}
+  >
     <div class="text-[13px] opacity-70">{$i18n.t('settings.about.desktopVersion')}</div>
     <div class="text-[12px] opacity-30">{$appInfo?.version ?? $i18n.t('common.unknown')}</div>
-  </div>
+  </button>
 
   {#if openWebuiVersion}
     <button
@@ -291,3 +404,134 @@
 </div>
 
 <div class="text-[10px] opacity-15 mt-4 leading-relaxed">{$i18n.t('settings.about.copyright')}<br />{$i18n.t('settings.about.createdBy')}</div>
+
+<!-- Easter Egg: Matrix Rain Overlay -->
+{#if easterEggActive}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <div class="matrix-overlay" onclick={dismissEasterEgg}>
+
+    {#if showTypewriter}
+      <div class="matrix-typewriter">
+        <span>{typewriterText}</span><span class="cursor">▌</span>
+      </div>
+    {/if}
+
+    {#if showReveal}
+      <div class="matrix-reveal">
+        <img src={logoImage} alt="Open WebUI" class="matrix-logo-img" />
+      </div>
+    {/if}
+  </div>
+{/if}
+
+<style>
+  .matrix-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+    cursor: pointer;
+    animation: matrixFadeIn 1.5s ease-out;
+  }
+
+
+
+
+  .matrix-typewriter {
+    position: absolute;
+    top: 80px;
+    left: 60px;
+    pointer-events: none;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace;
+    font-size: 15px;
+    color: #15b800;
+    letter-spacing: 1px;
+  }
+
+  .matrix-typewriter .cursor {
+    animation: blink 0.8s step-end infinite;
+    opacity: 0.8;
+  }
+
+  .matrix-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    animation: ghostReveal 3s ease-out both;
+  }
+
+  .matrix-logo-img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(57, 200, 20, 0.3)) drop-shadow(0 0 40px rgba(57, 200, 20, 0.15))
+           brightness(0.8) sepia(1) saturate(3) hue-rotate(70deg);
+    animation: ghostPulse 4s ease-in-out infinite, glitch 8s ease-in-out infinite;
+  }
+
+  @keyframes matrixFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes ghostReveal {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+      filter: blur(8px);
+    }
+    60% {
+      opacity: 0.6;
+      filter: blur(2px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes ghostPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 20px rgba(57, 200, 20, 0.3)) drop-shadow(0 0 40px rgba(57, 200, 20, 0.15))
+             brightness(0.8) sepia(1) saturate(3) hue-rotate(70deg);
+      opacity: 0.8;
+    }
+    50% {
+      filter: drop-shadow(0 0 30px rgba(57, 200, 20, 0.5)) drop-shadow(0 0 60px rgba(57, 200, 20, 0.25))
+             brightness(0.9) sepia(1) saturate(3) hue-rotate(70deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes glitch {
+    0%, 94%, 100% {
+      transform: translate(0);
+    }
+    95% {
+      transform: translate(-2px, 1px);
+    }
+    96% {
+      transform: translate(2px, -1px);
+    }
+    97% {
+      transform: translate(0);
+    }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes typewriterFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+</style>

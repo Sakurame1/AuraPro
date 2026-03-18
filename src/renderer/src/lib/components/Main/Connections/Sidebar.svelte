@@ -6,6 +6,7 @@
 
   interface Props {
     activeConnectionId: string
+    connectingId: string
     localConn: any
     localInstalled: boolean
     remoteConnections: any[]
@@ -30,6 +31,7 @@
 
   let {
     activeConnectionId,
+    connectingId,
     localConn,
     localInstalled,
     remoteConnections,
@@ -107,11 +109,12 @@
   <div class="flex-1 min-h-0 overflow-y-auto px-2">
     <!-- Pinned: Open WebUI (local) -->
     {#if localConn && localInstalled}
-      {@const isLocalDisabled = !serverReachable}
+      {@const isServerLoading = connectingId === localConn.id || serverStatus === 'starting' || (serverStatus === 'running' && !serverReachable)}
+      {@const isLocalDisabled = !serverReachable && !isServerLoading}
       <div
         class="w-full px-2 py-[6px] rounded-xl group flex items-center gap-2 transition-colors {isLocalDisabled
           ? 'opacity-40 cursor-default'
-          : 'cursor-pointer'} {activeConnectionId === localConn.id
+          : 'cursor-pointer'} {activeConnectionId === localConn.id || isServerLoading
           ? 'bg-black/[0.06] dark:bg-white/[0.08]'
           : isLocalDisabled
             ? ''
@@ -121,7 +124,7 @@
         onclick={() => !isLocalDisabled && onConnect(localConn.id)}
         onkeydown={(e) => e.key === 'Enter' && !isLocalDisabled && onConnect(localConn.id)}
       >
-        {#if serverStatus === 'starting' || (serverStatus === 'running' && !serverReachable)}
+        {#if connectingId === localConn.id || serverStatus === 'starting' || (serverStatus === 'running' && !serverReachable)}
           <div class="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
             <div
               class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"
@@ -260,19 +263,27 @@
         onclick={() => editingId !== conn.id && onConnect(conn.id)}
         onkeydown={(e) => e.key === 'Enter' && editingId !== conn.id && onConnect(conn.id)}
       >
-        <svg
-          class="w-[14px] h-[14px] shrink-0 opacity-30"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
-          />
-        </svg>
+        {#if connectingId === conn.id}
+          <div class="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
+            <div
+              class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"
+            ></div>
+          </div>
+        {:else}
+          <svg
+            class="w-[14px] h-[14px] shrink-0 opacity-30"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
+            />
+          </svg>
+        {/if}
 
         {#if editingId === conn.id}
           <!-- svelte-ignore a11y_autofocus -->
