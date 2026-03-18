@@ -44,6 +44,11 @@
   "common.unknown": "未知",
   "common.copied": "✓",
 
+  "error.installFailedGeneric": "安裝失敗",
+  "error.somethingWentWrong": "發生了一些問題",
+  "error.notEnoughDiskSpace": "磁碟空間不足",
+  "error.diskSpaceDetail": "至少需要 5 GB 空間，目前僅有 {{available}} GB 可用。",
+
   "setup.newConnection": "新增連線",
   "setup.orInstallLocally": "或在本機安裝 →",
   "setup.connectToServer": "連線到現有伺服器 →",
