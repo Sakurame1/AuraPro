@@ -242,6 +242,29 @@
     </div>
   </div>
 
+  <!-- Running Instance Info -->
+  {#if isRunning && lsInfo}
+    <div class="py-4">
+      <div class="text-[13px] opacity-70 mb-3">Running Instance</div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">URL</span>
+          <button class="text-[12px] opacity-50 font-mono hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 underline decoration-dotted underline-offset-2 cursor-pointer" onclick={() => window.open(lsInfo.url)}>{lsInfo.url}</button>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">PID</span>
+          <span class="text-[12px] opacity-50 font-mono">{lsInfo.pid}</span>
+        </div>
+        {#if lsInfo.version}
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">Build</span>
+          <span class="text-[12px] opacity-50 font-mono">{lsInfo.version}</span>
+        </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
   <!-- Start on Launch -->
   <div class="py-4 flex items-center justify-between">
     <div>
@@ -316,21 +339,5 @@
     />
   </div>
 
-  <!-- Running Instance Info -->
-  {#if isRunning && lsInfo}
-    <div class="py-4">
-      <div class="text-[13px] opacity-70 mb-3">Running Instance</div>
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] opacity-30">URL</span>
-          <span class="text-[12px] opacity-50 font-mono">{lsInfo.url}</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] opacity-30">PID</span>
-          <span class="text-[12px] opacity-50 font-mono">{lsInfo.pid}</span>
-        </div>
-      </div>
-    </div>
-  {/if}
 </div>
 {/if}

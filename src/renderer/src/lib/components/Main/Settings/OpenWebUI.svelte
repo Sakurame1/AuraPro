@@ -9,12 +9,14 @@
   let starting = $state(false)
   let restarting = $state(false)
   let version = $state<string | null>(null)
+  let serverPid = $state<number | null>(null)
   let loaded = $state(false)
   let defaultDataPath = $state('')
 
   onMount(async () => {
     const info = await window.electronAPI.getServerInfo()
     serverStatus = info?.status ?? null
+    serverPid = info?.pid ?? null
     version = await window.electronAPI.getPackageVersion('open-webui')
     defaultDataPath = await window.electronAPI.getDefaultDataPath()
     loaded = true
@@ -125,7 +127,7 @@
       <div>
         <div class="text-[13px] opacity-70">Server</div>
         <div class="text-[11px] opacity-25 mt-0.5">
-          {#if version}v{version} ·{/if} Local Open WebUI instance
+          {#if version}v{version} · {/if}Local Open WebUI instance
         </div>
       </div>
       <div class="flex items-center gap-1.5">
@@ -209,6 +211,25 @@
       </button>
     </div>
   </div>
+
+  <!-- Running Instance Info -->
+  {#if isRunning}
+    <div class="py-4">
+      <div class="text-[13px] opacity-70 mb-3">Running Instance</div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">URL</span>
+          <button class="text-[12px] opacity-50 font-mono hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 underline decoration-dotted underline-offset-2 cursor-pointer" onclick={() => window.open($serverInfo?.url ?? 'http://127.0.0.1:8080')}>{$serverInfo?.url ?? 'http://127.0.0.1:8080'}</button>
+        </div>
+        {#if serverPid}
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">PID</span>
+          <span class="text-[12px] opacity-50 font-mono">{serverPid}</span>
+        </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
 
   <div class="py-4 flex items-center justify-between">
     <div>

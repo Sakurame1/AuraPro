@@ -129,7 +129,7 @@
       <div>
         <div class="text-[13px] opacity-70">Server</div>
         <div class="text-[11px] opacity-25 mt-0.5">
-          {#if version}v{version} ·{/if} Open Terminal instance
+          {#if version}v{version} · {/if}Open Terminal instance
         </div>
       </div>
       <div class="flex items-center gap-1.5">
@@ -214,6 +214,25 @@
     </div>
   </div>
 
+  <!-- Running Instance Info -->
+  {#if isRunning && otInfo}
+    <div class="py-4">
+      <div class="text-[13px] opacity-70 mb-3">Running Instance</div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">URL</span>
+          <button class="text-[12px] opacity-50 font-mono hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 underline decoration-dotted underline-offset-2 cursor-pointer" onclick={() => window.open(otInfo.url)}>{otInfo.url}</button>
+        </div>
+        {#if otInfo.pid}
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] opacity-30">PID</span>
+          <span class="text-[12px] opacity-50 font-mono">{otInfo.pid}</span>
+        </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
   <div class="py-4 flex items-center justify-between">
     <div>
       <div class="text-[13px] opacity-70">Start on launch</div>
@@ -274,7 +293,7 @@
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <span class="text-[11px] opacity-30">URL</span>
-          <span class="text-[12px] opacity-50 font-mono">{otInfo.url}</span>
+          <button class="text-[12px] opacity-50 font-mono hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 underline decoration-dotted underline-offset-2 cursor-pointer" onclick={() => window.open(otInfo.url)}>{otInfo.url}</button>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-[11px] opacity-30">API Key</span>
