@@ -621,7 +621,7 @@ if (!gotTheLock) {
         return res
       } catch (error) {
         sendToRenderer('status:python', false)
-        sendToRenderer('error', { message: error?.message ?? 'Python install failed' })
+        sendToRenderer('error', { message: error?.message ?? 'Python installation failed. Please check your internet connection and try again.' })
         return false
       }
     })
@@ -638,7 +638,7 @@ if (!gotTheLock) {
         const otVersion = CONFIG?.openTerminal?.version || undefined
 
         sendToRenderer('status:install', 'Installing Open WebUI…')
-        const res = await installPackage('open-webui', owuiVersion, (status: string) => {
+        await installPackage('open-webui', owuiVersion, (status: string) => {
           sendToRenderer('status:install', status)
         })
         sendToRenderer('status:install', 'Installing Open Terminal…')
@@ -647,11 +647,11 @@ if (!gotTheLock) {
         }).catch((e) =>
           log.warn('open-terminal install failed (non-fatal):', e)
         )
-        sendToRenderer('status:package', res)
-        return res
+        sendToRenderer('status:package', true)
+        return true
       } catch (error) {
         sendToRenderer('status:package', false)
-        sendToRenderer('error', { message: error?.message ?? 'Package install failed' })
+        sendToRenderer('error', { message: error?.message ?? 'Package installation failed. Please check your internet connection and try again.' })
         return false
       }
     })

@@ -267,10 +267,21 @@ export const installPython = async (installationDir?: string, onStatus?: (status
     await tar.x({ cwd: userDataPath, file: pythonDownloadPath })
   } catch (error) {
     log.error(error)
-    return false
+    // Remove possibly-corrupted download so next retry re-downloads
+    try { fs.unlinkSync(pythonDownloadPath) } catch {}
+    throw new Error(
+      'Failed to extract Python. The download may be corrupted. Please try again.'
+    )
   }
 
-  if (isPythonInstalled(installationDir)) {
+  if (!isPythonInstalled(installationDir)) {
+    log.error('Python installation failed or not found')
+    throw new Error(
+      'Python was not found after installation. Try restarting the app or freeing disk space.'
+    )
+  }
+
+  try {
     onStatus?.('Installing uv package manager…')
     const pythonPath = getPythonPath(installationDir)
     execFileSync(pythonPath, ['-m', 'pip', 'install', 'uv'], {
@@ -282,9 +293,11 @@ export const installPython = async (installationDir?: string, onStatus?: (status
     })
     log.info('Successfully installed uv package')
     return true
-  } else {
-    log.error('Python installation failed or not found')
-    return false
+  } catch (error) {
+    log.error('Failed to install uv:', error)
+    throw new Error(
+      `Failed to install the uv package manager: ${error?.message || 'unknown error'}`
+    )
   }
 }
 
@@ -364,7 +377,7 @@ export const uninstallPython = (installationDir?: string): boolean => {
 export const installPackage = (packageName: string, version?: string, onStatus?: (status: string) => void): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     if (!isPythonInstalled()) {
-      return reject(new Error('Python is not installed'))
+      return reject(new Error('Python is not installed. Please reinstall the app or run setup again.'))
     }
     const pythonPath = getPythonPath()
     const commandProcess = execFile(
@@ -384,23 +397,36 @@ export const installPackage = (packageName: string, version?: string, onStatus?:
       }
     )
 
+    let lastLine = ''
     commandProcess.stdout?.on('data', (data) => {
       const line = data.toString().trim()
       log.info(line)
-      if (line) onStatus?.(line)
+      if (line) {
+        lastLine = line
+        onStatus?.(line)
+      }
     })
     commandProcess.stderr?.on('data', (data) => {
       const line = data.toString().trim()
       log.info(line)
-      if (line) onStatus?.(line)
+      if (line) {
+        lastLine = line
+        onStatus?.(line)
+      }
     })
     commandProcess.on('exit', (code) => {
       log.info(`Package install exited with code ${code}`)
-      resolve(code === 0)
+      if (code === 0) {
+        resolve(true)
+      } else {
+        reject(new Error(
+          lastLine || `Package installation failed (exit code ${code}). Please check your internet connection and try again.`
+        ))
+      }
     })
     commandProcess.on('error', (error) => {
       log.error(`Package install error: ${error.message}`)
-      reject(error)
+      reject(new Error(`Failed to run package installer: ${error.message}`))
     })
   })
 }

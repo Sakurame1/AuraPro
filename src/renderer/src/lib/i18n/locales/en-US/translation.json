@@ -44,6 +44,7 @@
   "common.unknown": "Unknown",
   "common.copied": "✓",
 
+
   "setup.newConnection": "New Connection",
   "setup.orInstallLocally": "Or install locally →",
   "setup.connectToServer": "Connect to existing server →",
@@ -60,6 +61,11 @@
   "setup.install.mightTakeMinutes": "This might take a few minutes",
   "setup.install.failed": "Install failed",
   "setup.install.somethingWentWrong": "Something went wrong",
+
+  "error.notEnoughDiskSpace": "Not enough disk space",
+  "error.diskSpaceDetail": "At least 5 GB is required. Only {{available}} GB available.",
+  "error.installFailedGeneric": "Installation failed. Please check your connection and try again.",
+  "error.somethingWentWrong": "Something went wrong. Please try again.",
 
   "setup.connectionManager.connections": "Connections",
   "setup.connectionManager.noConnections": "No connections",

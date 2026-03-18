@@ -45,6 +45,8 @@
       appState.set('initializing')
       api.installPython().then(async () => {
         appState.set('ready')
+      }).catch((e: any) => {
+        appState.set(`install-failed:${e?.message || 'Python installation failed. Please try again.'}`)
       })
     } else {
       appState.set('ready')

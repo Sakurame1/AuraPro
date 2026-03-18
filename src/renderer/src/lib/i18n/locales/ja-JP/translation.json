@@ -44,6 +44,11 @@
   "common.unknown": "不明",
   "common.copied": "✓",
 
+  "error.installFailedGeneric": "インストールに失敗しました",
+  "error.somethingWentWrong": "問題が発生しました",
+  "error.notEnoughDiskSpace": "ディスク容量が不足しています",
+  "error.diskSpaceDetail": "5 GB 以上の空き容量が必要です。現在 {{available}} GB しかありません。",
+
   "setup.newConnection": "新しい接続",
   "setup.orInstallLocally": "またはローカルにインストール →",
   "setup.connectToServer": "既存のサーバーに接続 →",

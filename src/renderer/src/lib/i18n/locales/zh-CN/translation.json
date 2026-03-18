@@ -44,6 +44,11 @@
   "common.unknown": "未知",
   "common.copied": "✓",
 
+  "error.installFailedGeneric": "安装失败",
+  "error.somethingWentWrong": "出了点问题",
+  "error.notEnoughDiskSpace": "磁盘空间不足",
+  "error.diskSpaceDetail": "至少需要 5 GB 空间，当前仅有 {{available}} GB 可用。",
+
   "setup.newConnection": "新建连接",
   "setup.orInstallLocally": "或在本地安装 →",
   "setup.connectToServer": "连接到现有服务器 →",

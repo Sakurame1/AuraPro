@@ -61,6 +61,11 @@
       ? $appState.split(':')[1]
       : null
   )
+  const installFailed = $derived(
+    $appState?.startsWith('install-failed:')
+      ? $appState.substring('install-failed:'.length)
+      : null
+  )
   let copied = $state(false)
 </script>
 
@@ -206,7 +211,36 @@
               return
             }
             appState.set('initializing')
-            window.electronAPI.installPython().then(() => appState.set('ready'))
+            window.electronAPI.installPython().then(() => appState.set('ready')).catch((e: any) => {
+              appState.set(`install-failed:${e?.message || 'Python installation failed. Please try again.'}`)
+            })
+          }}
+        >
+          {$i18n.t('common.retry')}
+        </button>
+      </div>
+    {:else if installFailed}
+      <div class="px-5 py-2.5 flex items-center gap-3 bg-red-500/[0.06] border-b border-red-500/10">
+        <div class="flex-1">
+          <div class="text-[12px] text-red-400 font-medium">{$i18n.t('error.installFailedGeneric')}</div>
+          <div class="text-[11px] opacity-40 mt-0.5 line-clamp-2">
+            {installFailed}
+          </div>
+        </div>
+        <button
+          class="shrink-0 text-[11px] px-3 py-1 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] opacity-60 hover:opacity-90 transition border-none text-[#1d1d1f] dark:text-[#fafafa] cursor-pointer"
+          onclick={async () => {
+            const MINIMUM_DISK_BYTES = 5 * 1024 * 1024 * 1024
+            const disk = await window.electronAPI.getDiskSpace()
+            if (disk?.free >= 0 && disk.free < MINIMUM_DISK_BYTES) {
+              const gb = (disk.free / (1024 * 1024 * 1024)).toFixed(1)
+              appState.set(`insufficient-storage:${gb}`)
+              return
+            }
+            appState.set('initializing')
+            window.electronAPI.installPython().then(() => appState.set('ready')).catch((e: any) => {
+              appState.set(`install-failed:${e?.message || 'Python installation failed. Please try again.'}`)
+            })
           }}
         >
           {$i18n.t('common.retry')}

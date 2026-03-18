@@ -91,7 +91,7 @@
       }
 
       const ok = await window.electronAPI.installPackage()
-      if (!ok) throw new Error('Install failed')
+      if (!ok) throw new Error($i18n.t('error.installFailedGeneric'))
 
       installStatus = $i18n.t('main.install.startingServer')
       await window.electronAPI.startServer()
@@ -126,7 +126,7 @@
       await connect('local')
     } catch (e: any) {
       installPhase = 'error'
-      installError = e?.message || 'Something went wrong'
+      installError = e?.message || $i18n.t('error.somethingWentWrong')
       toastVisible = true
       if (toastTimeout) clearTimeout(toastTimeout)
       toastTimeout = setTimeout(() => { toastVisible = false }, 5000)
