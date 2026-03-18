@@ -59,9 +59,7 @@
         </button>
       </div>
       <div class="flex-1 flex items-center justify-center">
-        {#if activeConnectionName}
-          <span class="text-[11px] opacity-80">{activeConnectionName}</span>
-        {/if}
+        <span class="text-[11px] opacity-80">{activeConnectionName || 'Open WebUI'}</span>
       </div>
       {#if isLocalConnection}
         <div class="pr-3 shrink-0 flex items-center">
