@@ -245,11 +245,14 @@ export const installPython = async (installationDir?: string, onStatus?: (status
         'An active internet connection is required. Please connect to the internet and try again.'
       )
     }
+    let lastReportedPct = -1
     await downloadPython((progress, downloaded, total) => {
-      const pct = progress.toFixed(0)
+      const pct = Math.floor(progress)
+      if (pct === lastReportedPct) return
+      lastReportedPct = pct
       const mb = (downloaded / 1024 / 1024).toFixed(1)
       const totalMb = (total / 1024 / 1024).toFixed(1)
-      log.info(`Downloading Python: ${pct}% (${downloaded} of ${total} bytes)`)
+      log.info(`Downloading Python: ${pct}% (${mb}/${totalMb} MB)`)
       onStatus?.(`Downloading Python… ${pct}% (${mb}/${totalMb} MB)`)
     })
   }
@@ -284,12 +287,22 @@ export const installPython = async (installationDir?: string, onStatus?: (status
   try {
     onStatus?.('Installing uv package manager…')
     const pythonPath = getPythonPath(installationDir)
-    execFileSync(pythonPath, ['-m', 'pip', 'install', 'uv'], {
-      encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        pythonPath,
+        ['-m', 'pip', 'install', 'uv'],
+        {
+          encoding: 'utf-8',
+          env: {
+            ...process.env,
+            ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
+          }
+        },
+        (error) => {
+          if (error) reject(error)
+          else resolve()
+        }
+      )
     })
     log.info('Successfully installed uv package')
     return true
