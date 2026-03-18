@@ -12,10 +12,8 @@ jobs:
         strategy:
             matrix:
                 include:
-                    # - os: ubuntu-latest
-                    #   arch: x64
-                    # - os: ubuntu-latest
-                    #   arch: arm64
+                    - os: ubuntu-latest
+                      arch: x64
                     - os: windows-latest
                       arch: x64
                     - os: macos-latest
@@ -34,6 +32,15 @@ jobs:
 
             - name: Install Dependencies
               run: npm ci
+
+            - name: Install Flatpak build tools
+              if: ${{ matrix.os == 'ubuntu-latest' }}
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y flatpak flatpak-builder
+                  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+                  flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+                  flatpak install --user -y flathub org.electronjs.Electron2.BaseApp//23.08
 
             - name: Install Apple codesigning certificate
               if: ${{ matrix.os == 'macos-latest' }}
@@ -101,7 +108,7 @@ jobs:
               run: |
                   if [ -d "dist" ]; then
                     shopt -s nullglob
-                    for package_file in dist/*.deb dist/*.rpm dist/*.AppImage dist/*.tar.gz; do
+                    for package_file in dist/*.deb dist/*.rpm dist/*.AppImage dist/*.tar.gz dist/*.flatpak; do
                       [ -e "$package_file" ] || continue
                       filename=$(basename "$package_file")
                       extension="${filename##*.}"
@@ -185,7 +192,7 @@ jobs:
             - name: List downloaded artifacts
               run: |
                   echo "Downloaded artifacts:"
-                  find . -type f -name "*" | grep -E "\.(exe|zip|dmg|pkg|deb|rpm|AppImage|tar\.gz|yml)$" || echo "No package files found"
+                  find . -type f -name "*" | grep -E "\.(exe|zip|dmg|pkg|deb|rpm|AppImage|flatpak|tar\.gz|yml)$" || echo "No package files found"
                   ls -la
 
             - name: Create Release
@@ -207,6 +214,7 @@ jobs:
                       **/*.deb
                       **/*.rpm
                       **/*.AppImage
+                      **/*.flatpak
                       **/*.tar.gz
                       **/latest*.yml
 
