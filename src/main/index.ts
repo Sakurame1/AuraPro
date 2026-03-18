@@ -380,8 +380,6 @@ const resetAppHandler = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()
     new Notification({ title: 'Open WebUI', body: 'Application has been reset.' }).show()
-    // Reload the renderer so UI cleanly resets
-    mainWindow?.webContents.reload()
   } catch (error) {
     log.error('Failed to reset:', error)
     new Notification({ title: 'Open WebUI', body: `Reset failed: ${error.message}` }).show()

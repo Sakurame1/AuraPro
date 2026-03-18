@@ -11,6 +11,7 @@
 
   let settingsTab = $state('general')
   let launchAtLogin = $state(false)
+  let resetting = $state(false)
 
   onMount(async () => {
     launchAtLogin = await window.electronAPI.getLaunchAtLogin()
@@ -232,18 +233,28 @@
                 </div>
               </div>
               <button
-                class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl"
-                onclick={() => {
+                class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {resetting ? 'pointer-events-none opacity-30' : ''}"
+                disabled={resetting}
+                onclick={async () => {
                   if (
                     confirm(
                       'This will remove all installed components, data, and connections. The app will restart. Continue?'
                     )
                   ) {
-                    window.electronAPI.resetApp()
+                    resetting = true
+                    await window.electronAPI.resetApp()
+                    window.location.reload()
                   }
                 }}
               >
-                Reset
+                {#if resetting}
+                  <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                  </svg>
+                  Resetting…
+                {:else}
+                  Reset
+                {/if}
               </button>
             </div>
           </div>
@@ -312,6 +323,8 @@
               </button>
             </div>
           </div>
+
+          <div class="text-[10px] opacity-15 mt-4 leading-relaxed">Copyright (c) 2026 Open WebUI Inc. All rights reserved.<br />Created by Timothy J. Baek</div>
         {/if}
       </div>
     {/if}
