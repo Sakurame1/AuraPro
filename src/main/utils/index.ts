@@ -136,7 +136,7 @@ const getArchString = () => {
 const generateDownloadUrl = () => {
   const baseUrl = 'https://github.com/astral-sh/python-build-standalone/releases/download'
   const releaseDate = '20260310'
-  const pythonVersion = '3.12.12'
+  const pythonVersion = '3.12.13'
   const archString = getArchString()
   const platformString = getPlatformString()
   const filename = `cpython-${pythonVersion}+${releaseDate}-${archString}-${platformString}-install_only.tar.gz`
@@ -181,7 +181,7 @@ export const downloadFileWithProgress = async (url, downloadPath, onProgress) =>
 }
 
 export const getPythonDownloadPath = (): string => {
-  return path.join(getUserDataPath(), 'py.tar.gz')
+  return path.join(getUserDataPath(), 'python.tar.gz')
 }
 
 export const getPythonInstallationDir = (): string => {
@@ -228,7 +228,7 @@ const checkInternet = async () => {
   }
 }
 
-export const installPython = async (installationDir?: string): Promise<boolean> => {
+export const installPython = async (installationDir?: string, onStatus?: (status: string) => void): Promise<boolean> => {
   const pythonDownloadPath = getPythonDownloadPath()
   if (!fs.existsSync(pythonDownloadPath)) {
     if (!(await checkInternet())) {
@@ -237,7 +237,11 @@ export const installPython = async (installationDir?: string): Promise<boolean> 
       )
     }
     await downloadPython((progress, downloaded, total) => {
-      log.info(`Downloading Python: ${progress.toFixed(2)}% (${downloaded} of ${total} bytes)`)
+      const pct = progress.toFixed(0)
+      const mb = (downloaded / 1024 / 1024).toFixed(1)
+      const totalMb = (total / 1024 / 1024).toFixed(1)
+      log.info(`Downloading Python: ${pct}% (${downloaded} of ${total} bytes)`)
+      onStatus?.(`Downloading Python… ${pct}% (${mb}/${totalMb} MB)`)
     })
   }
   if (!fs.existsSync(pythonDownloadPath)) {
@@ -249,6 +253,7 @@ export const installPython = async (installationDir?: string): Promise<boolean> 
   log.info(installationDir, pythonDownloadPath)
 
   try {
+    onStatus?.('Extracting Python…')
     const userDataPath = getUserDataPath()
     await tar.x({ cwd: userDataPath, file: pythonDownloadPath })
   } catch (error) {
@@ -257,6 +262,7 @@ export const installPython = async (installationDir?: string): Promise<boolean> 
   }
 
   if (isPythonInstalled(installationDir)) {
+    onStatus?.('Installing uv package manager…')
     const pythonPath = getPythonPath(installationDir)
     execFileSync(pythonPath, ['-m', 'pip', 'install', 'uv'], {
       encoding: 'utf-8',
@@ -346,7 +352,7 @@ export const uninstallPython = (installationDir?: string): boolean => {
 
 // ─── Package Management ─────────────────────────────────
 
-export const installPackage = (packageName: string, version?: string): Promise<boolean> => {
+export const installPackage = (packageName: string, version?: string, onStatus?: (status: string) => void): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     if (!isPythonInstalled()) {
       return reject(new Error('Python is not installed'))
@@ -369,8 +375,16 @@ export const installPackage = (packageName: string, version?: string): Promise<b
       }
     )
 
-    commandProcess.stdout?.on('data', (data) => log.info(data))
-    commandProcess.stderr?.on('data', (data) => log.info(data))
+    commandProcess.stdout?.on('data', (data) => {
+      const line = data.toString().trim()
+      log.info(line)
+      if (line) onStatus?.(line)
+    })
+    commandProcess.stderr?.on('data', (data) => {
+      const line = data.toString().trim()
+      log.info(line)
+      if (line) onStatus?.(line)
+    })
     commandProcess.on('exit', (code) => {
       log.info(`Package install exited with code ${code}`)
       resolve(code === 0)
@@ -380,6 +394,17 @@ export const installPackage = (packageName: string, version?: string): Promise<b
       reject(error)
     })
   })
+}
+
+export const installPackages = async (
+  packages: string[],
+  version?: string
+): Promise<boolean> => {
+  for (const pkg of packages) {
+    const ok = await installPackage(pkg, version)
+    if (!ok) return false
+  }
+  return true
 }
 
 export const isPackageInstalled = (packageName: string): boolean => {
@@ -395,6 +420,43 @@ export const isPackageInstalled = (packageName: string): boolean => {
     })
     return info.includes(`Name: ${packageName}`)
   } catch {
+    return false
+  }
+}
+
+export const getPackageVersion = (packageName: string): string | null => {
+  const pythonPath = getPythonPath()
+  if (!fs.existsSync(pythonPath)) return null
+  try {
+    const info = execFileSync(pythonPath, ['-m', 'uv', 'pip', 'show', packageName], {
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
+      }
+    })
+    const match = info.match(/^Version:\s*(.+)$/m)
+    return match ? match[1].trim() : null
+  } catch {
+    return null
+  }
+}
+
+export const uninstallPackage = (packageName: string): boolean => {
+  const pythonPath = getPythonPath()
+  if (!fs.existsSync(pythonPath)) return false
+  try {
+    execFileSync(pythonPath, ['-m', 'uv', 'pip', 'uninstall', packageName], {
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
+      }
+    })
+    log.info(`Uninstalled package: ${packageName}`)
+    return true
+  } catch (error) {
+    log.error(`Failed to uninstall ${packageName}:`, error)
     return false
   }
 }
@@ -491,6 +553,7 @@ export const startServer = async (
 
   return { url, pid }
 }
+
 
 export async function stopAllServers(): Promise<void> {
   log.info('Stopping all servers...')
@@ -669,6 +732,10 @@ export interface AppConfig {
     serveOnLocalNetwork: boolean
     autoUpdate: boolean
   }
+  openTerminal: {
+    enabled: boolean
+    port: number
+  }
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -679,6 +746,10 @@ const DEFAULT_CONFIG: AppConfig = {
     port: 8080,
     serveOnLocalNetwork: false,
     autoUpdate: true
+  },
+  openTerminal: {
+    enabled: false,
+    port: 8000
   }
 }
 

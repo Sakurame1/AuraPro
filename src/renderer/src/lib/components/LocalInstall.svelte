@@ -5,9 +5,9 @@
 
   import logoImage from '../assets/images/splash.png'
 
-  let { onBack, onComplete } = $props()
+  let { onBack, onComplete, autoStart = false } = $props()
 
-  let phase = $state('ready') // ready | working | done | error
+  let phase = $state(autoStart ? 'working' : 'ready') // ready | working | done | error
   let errorMsg = $state('')
 
   const install = async () => {
@@ -39,6 +39,10 @@
       errorMsg = e?.message || 'Something went wrong'
     }
   }
+
+  onMount(() => {
+    if (autoStart) install()
+  })
 </script>
 
 <div class="flex flex-col" in:fade={{ duration: 200 }}>

@@ -30,6 +30,8 @@ import {
   installPython,
   isPackageInstalled,
   isPythonInstalled,
+  getPackageVersion,
+  uninstallPackage,
   isUvInstalled,
   openUrl,
   resetApp,
@@ -41,6 +43,14 @@ import {
   type AppConfig,
   type Connection
 } from './utils'
+
+import {
+  startOpenTerminal,
+  stopOpenTerminal,
+  getOpenTerminalInfo,
+  getOpenTerminalPty,
+  getOpenTerminalLog
+} from './utils/open-terminal'
 
 import log from 'electron-log'
 log.transports.file.resolvePathFn = () => getLogFilePath('main')
@@ -356,6 +366,42 @@ const connectPtyPort = (pid?: number): void => {
   mainWindow.webContents.postMessage('pty:port', { pid: targetPid }, [port2])
 }
 
+/**
+ * MessagePort channel for the Open Terminal PTY — read-only log viewer.
+ */
+let activeOpenTerminalDisposable: { dispose: () => void } | null = null
+
+const connectOpenTerminalPtyPort = (): void => {
+  if (!mainWindow) return
+
+  const { port1, port2 } = new MessageChannelMain()
+
+  const otPty = getOpenTerminalPty()
+  if (!otPty) {
+    port1.postMessage({ type: 'output', data: '[Open Terminal is not running]\r\n' })
+    mainWindow.webContents.postMessage('open-terminal:pty:port', null, [port2])
+    return
+  }
+
+  // Clean up previous
+  activeOpenTerminalDisposable?.dispose()
+
+  // Replay log buffer
+  const buffer = getOpenTerminalLog()
+  for (const chunk of buffer) {
+    port1.postMessage({ type: 'output', data: chunk })
+  }
+
+  // Live data
+  const disposable = otPty.onData((data: string) => {
+    port1.postMessage({ type: 'output', data })
+  })
+  activeOpenTerminalDisposable = disposable
+
+  port1.start()
+  mainWindow.webContents.postMessage('open-terminal:pty:port', null, [port2])
+}
+
 const stopServerHandler = async (): Promise<boolean> => {
   try {
     await stopAllServers()
@@ -377,6 +423,13 @@ const resetAppHandler = async () => {
   try {
     await stopServerHandler()
     SERVER_STATUS = null
+    // Stop Open Terminal if running
+    try {
+      await stopOpenTerminal()
+      sendToRenderer('status:open-terminal', null)
+    } catch (e) {
+      log.warn('Failed to stop Open Terminal during reset:', e)
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()
     new Notification({ title: 'Open WebUI', body: 'Application has been reset.' }).show()
@@ -419,6 +472,10 @@ if (!gotTheLock) {
     CONFIG = await getConfig()
     log.info('Config:', CONFIG)
 
+    app.name = 'Open WebUI'
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.setIcon(icon)
+    }
     electronApp.setAppUserModelId('com.openwebui.desktop')
 
     app.on('browser-window-created', (_, window) => {
@@ -445,7 +502,10 @@ if (!gotTheLock) {
     // Python/uv
     ipcMain.handle('install:python', async () => {
       try {
-        const res = await installPython()
+        sendToRenderer('status:install', 'Downloading Python…')
+        const res = await installPython(undefined, (status: string) => {
+          sendToRenderer('status:install', status)
+        })
         sendToRenderer('status:python', res)
         return res
       } catch (error) {
@@ -462,7 +522,16 @@ if (!gotTheLock) {
     // Package
     ipcMain.handle('install:package', async () => {
       try {
-        const res = await installPackage('open-webui')
+        sendToRenderer('status:install', 'Installing Open WebUI…')
+        const res = await installPackage('open-webui', undefined, (status: string) => {
+          sendToRenderer('status:install', status)
+        })
+        sendToRenderer('status:install', 'Installing Open Terminal…')
+        await installPackage('open-terminal', undefined, (status: string) => {
+          sendToRenderer('status:install', status)
+        }).catch((e) =>
+          log.warn('open-terminal install failed (non-fatal):', e)
+        )
         sendToRenderer('status:package', res)
         return res
       } catch (error) {
@@ -545,6 +614,47 @@ if (!gotTheLock) {
     // Misc
     ipcMain.handle('app:reset', () => resetAppHandler())
 
+    // Open Terminal
+    ipcMain.handle('open-terminal:start', async () => {
+      try {
+        sendToRenderer('status:open-terminal', 'starting')
+        const result = await startOpenTerminal(CONFIG?.openTerminal?.port ?? null)
+        sendToRenderer('status:open-terminal', 'started')
+        sendToRenderer('open-terminal:ready', result)
+        // Save enabled state
+        await setConfig({ openTerminal: { ...CONFIG?.openTerminal, enabled: true } })
+        CONFIG = await getConfig()
+        return result
+      } catch (error) {
+        log.error('Failed to start Open Terminal:', error)
+        sendToRenderer('status:open-terminal', 'failed')
+        sendToRenderer('error', { message: `Open Terminal failed: ${error?.message}` })
+        return null
+      }
+    })
+
+    ipcMain.handle('open-terminal:stop', async () => {
+      try {
+        await stopOpenTerminal()
+        sendToRenderer('status:open-terminal', 'stopped')
+        await setConfig({ openTerminal: { ...CONFIG?.openTerminal, enabled: false } })
+        CONFIG = await getConfig()
+        return true
+      } catch (error) {
+        log.error('Failed to stop Open Terminal:', error)
+        return false
+      }
+    })
+
+    ipcMain.handle('open-terminal:info', () => getOpenTerminalInfo())
+    ipcMain.handle('open-terminal:status', () => isPackageInstalled('open-terminal'))
+    ipcMain.handle('open-terminal:pty:connect', () => connectOpenTerminalPtyPort())
+
+    ipcMain.handle('package:version', (_event, packageName: string) => getPackageVersion(packageName))
+    ipcMain.handle('package:uninstall', async (_event, packageName: string) => {
+      return uninstallPackage(packageName)
+    })
+
     ipcMain.handle('app:launchAtLogin:get', () => {
       return app.getLoginItemSettings().openAtLogin
     })
@@ -608,6 +718,19 @@ if (!gotTheLock) {
       { useSystemPicker: true }
     )
 
+    // Auto-start Open Terminal if previously enabled
+    if (CONFIG?.openTerminal?.enabled) {
+      try {
+        sendToRenderer('status:open-terminal', 'starting')
+        const result = await startOpenTerminal(CONFIG?.openTerminal?.port ?? null)
+        sendToRenderer('status:open-terminal', 'started')
+        sendToRenderer('open-terminal:ready', result)
+      } catch (error) {
+        log.error('Auto-start Open Terminal failed:', error)
+        sendToRenderer('status:open-terminal', 'failed')
+      }
+    }
+
     // Check if already configured, auto-connect to default
     if (CONFIG.defaultConnectionId && CONFIG.connections.length > 0) {
       const defaultConn = CONFIG.connections.find(
@@ -640,6 +763,7 @@ if (!gotTheLock) {
 
   app.on('before-quit', async () => {
     isQuiting = true
+    await stopOpenTerminal()
     await stopServerHandler()
     globalShortcut.unregisterAll()
     mainWindow = null

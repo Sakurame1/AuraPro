@@ -39,7 +39,7 @@
           : 'pl-3'} pr-2 shrink-0 translate-y-[0.5px]"
       >
         <button
-          class="opacity-25 hover:opacity-50 transition bg-transparent border-none text-[#fafafa] no-drag"
+          class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#fafafa] no-drag"
           onclick={() => (sidebarOpen = !sidebarOpen)}
           use:tooltip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
         >
@@ -60,7 +60,7 @@
       </div>
       <div class="flex-1 flex items-center justify-center">
         {#if activeConnectionName}
-          <span class="text-[11px] opacity-30">{activeConnectionName}</span>
+          <span class="text-[11px] opacity-80">{activeConnectionName}</span>
         {/if}
       </div>
       {#if isLocalConnection}
