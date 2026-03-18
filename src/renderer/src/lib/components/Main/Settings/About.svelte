@@ -190,14 +190,14 @@
       <div>
         {#if updateStatus === 'idle' || updateStatus === 'up-to-date' || updateStatus === 'error'}
           <button
-            class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl"
+            class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
             onclick={handleCheck}
           >
             Check for Updates
           </button>
         {:else if updateStatus === 'checking'}
           <button
-            class="text-[12px] opacity-30 px-3 py-1.5 bg-white/[0.06] border-none text-[#fafafa] rounded-xl pointer-events-none flex items-center gap-1.5"
+            class="text-[12px] opacity-30 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl pointer-events-none flex items-center gap-1.5"
             disabled
           >
             <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -207,16 +207,16 @@
           </button>
         {:else if updateStatus === 'available'}
           <button
-            class="text-[12px] opacity-50 hover:opacity-80 px-3 py-1.5 bg-white/[0.08] transition border-none text-[#fafafa] rounded-xl"
+            class="text-[12px] opacity-50 hover:opacity-80 px-3 py-1.5 bg-black/[0.06] dark:bg-white/[0.08] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
             onclick={handleDownload}
           >
             Download Update
           </button>
         {:else if updateStatus === 'downloading'}
           <div class="flex items-center gap-2">
-            <div class="w-24 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+            <div class="w-24 h-1.5 bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
               <div
-                class="h-full bg-white/30 rounded-full transition-all duration-300"
+                class="h-full bg-black/[0.15] dark:bg-white/30 rounded-full transition-all duration-300"
                 style="width: {downloadPercent}%"
               ></div>
             </div>
@@ -224,7 +224,7 @@
           </div>
         {:else if updateStatus === 'downloaded'}
           <button
-            class="text-[12px] opacity-50 hover:opacity-80 px-3 py-1.5 bg-white/[0.08] transition border-none text-[#fafafa] rounded-xl"
+            class="text-[12px] opacity-50 hover:opacity-80 px-3 py-1.5 bg-black/[0.06] dark:bg-white/[0.08] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
             onclick={handleInstall}
           >
             Restart to Update
@@ -237,7 +237,7 @@
   <!-- Changelog section -->
   <div class="py-4">
     <button
-      class="text-[12px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#fafafa] flex items-center gap-1.5"
+      class="text-[12px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] flex items-center gap-1.5"
       onclick={toggleChangelog}
     >
       <svg
@@ -281,7 +281,7 @@
 
   <div class="py-4">
     <button
-      class="text-[12px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#fafafa]"
+      class="text-[12px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
       onclick={openGithub}
     >
       View on GitHub →
