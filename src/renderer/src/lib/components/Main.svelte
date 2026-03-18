@@ -24,7 +24,7 @@
 
 {#if visible}
   <div
-    class="h-full w-full flex flex-col bg-[#0a0a0a] text-[#fafafa] relative"
+    class="h-full w-full flex flex-col bg-[#f5f5f7] dark:bg-[#0a0a0a] text-[#1d1d1f] dark:text-[#fafafa] relative"
     in:fade={{ duration: 200 }}
   >
     <!-- Persistent top bar -->
@@ -39,7 +39,7 @@
           : 'pl-3'} pr-2 shrink-0 translate-y-[0.5px]"
       >
         <button
-          class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#fafafa] no-drag"
+          class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] no-drag"
           onclick={() => (sidebarOpen = !sidebarOpen)}
           use:tooltip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
         >
@@ -64,7 +64,7 @@
       {#if isLocalConnection}
         <div class="pr-3 shrink-0 flex items-center">
           <button
-            class="opacity-20 hover:opacity-50 transition bg-transparent border-none text-[#fafafa] no-drag"
+            class="opacity-20 hover:opacity-50 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] no-drag"
             onclick={() => (showingLogs = !showingLogs)}
             use:tooltip={showingLogs ? 'Back to Open WebUI' : 'Show logs'}
           >
@@ -116,7 +116,7 @@
       >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-          class="w-[calc(100%-32px)] h-[calc(100%-32px)] max-w-[900px] max-h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-white/[0.08]"
+          class="w-[calc(100%-32px)] h-[calc(100%-32px)] max-w-[900px] max-h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-black/[0.08] dark:border-white/[0.08]"
           in:fade={{ duration: 150 }}
           onclick={(e) => e.stopPropagation()}
         >

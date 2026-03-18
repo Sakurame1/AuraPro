@@ -46,9 +46,9 @@
   ]
 </script>
 
-<div class="h-full w-full flex bg-[#0a0a0a] text-[#fafafa]" in:fade={{ duration: 150 }}>
+<div class="h-full w-full flex bg-[#f5f5f7] dark:bg-[#0a0a0a] text-[#1d1d1f] dark:text-[#fafafa]" in:fade={{ duration: 150 }}>
   <!-- Settings sidebar -->
-  <div class="w-[180px] shrink-0 flex flex-col border-r border-white/[0.06] bg-[#111] px-1.5">
+  <div class="w-[180px] shrink-0 flex flex-col border-r border-black/[0.06] dark:border-white/[0.06] bg-[#eee] dark:bg-[#111] px-1.5">
     <div class="h-4 shrink-0"></div>
     <div class="px-3 pb-3">
       <span class="text-[13px] opacity-60 font-medium">Settings</span>
@@ -57,10 +57,10 @@
     <div class="flex flex-col gap-0.5 px-1">
       {#each tabs as tab}
         <button
-          class="flex items-center gap-2 px-2.5 py-[6px] rounded-2xl text-[12px] transition bg-transparent border-none text-[#fafafa] text-left w-full {settingsTab ===
+          class="flex items-center gap-2 px-2.5 py-[6px] rounded-2xl text-[12px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] text-left w-full {settingsTab ===
           tab.id
-            ? 'bg-white/[0.08] opacity-90'
-            : 'opacity-40 hover:opacity-70 hover:bg-white/[0.03]'}"
+            ? 'bg-black/[0.06] dark:bg-white/[0.08] opacity-90'
+            : 'opacity-40 hover:opacity-70 hover:bg-black/[0.02] dark:bg-white/[0.03]'}"
           onclick={() => (settingsTab = tab.id)}
         >
           <svg
@@ -83,10 +83,10 @@
 
   <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
     <!-- Content header -->
-    <div class="flex items-center justify-between px-8 pt-5 pb-3 border-b border-white/[0.04]">
+    <div class="flex items-center justify-between px-8 pt-5 pb-3 border-b border-black/[0.04] dark:border-white/[0.04]">
       <span class="text-[15px] opacity-80 font-medium">{tabs.find(t => t.id === settingsTab)?.label ?? settingsTab}</span>
       <button
-        class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#fafafa]"
+        class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
         onclick={onClose}
         title="Close settings"
       >

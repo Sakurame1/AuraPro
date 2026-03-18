@@ -18,7 +18,7 @@
 </script>
 
 {#if visible}
-  <div class="h-full w-full relative overflow-hidden bg-[#0a0a0a]" in:fade={{ duration: 500 }}>
+  <div class="h-full w-full relative overflow-hidden bg-[#f5f5f7] dark:bg-[#0a0a0a]" in:fade={{ duration: 500 }}>
     <!-- Video background -->
     <div class="absolute inset-0 overflow-hidden">
       <video
@@ -39,11 +39,11 @@
 
         {#if phase === 'initializing'}
           <div class="flex flex-col items-center gap-2 text-center">
-            <div class="text-sm text-[#fafafa] opacity-50">
+            <div class="text-sm text-[#1d1d1f] dark:text-[#fafafa] opacity-50">
               Preparing environment…
             </div>
             {#if $serverInfo?.status}
-              <div class="text-[11px] text-[#fafafa] opacity-25 max-w-[220px] leading-relaxed">
+              <div class="text-[11px] text-[#1d1d1f] dark:text-[#fafafa] opacity-25 max-w-[220px] leading-relaxed">
                 {$serverInfo.status}
               </div>
             {/if}

@@ -47,7 +47,7 @@
 
 <div class="flex flex-col" in:fade={{ duration: 200 }}>
   <button
-    class="self-start text-[12px] opacity-40 hover:opacity-70 transition mb-6 bg-transparent border-none text-[#fafafa] disabled:opacity-20"
+    class="self-start text-[12px] opacity-40 hover:opacity-70 transition mb-6 bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] disabled:opacity-20"
     onclick={onBack}
     disabled={phase === 'working'}
   >
@@ -98,7 +98,7 @@
     <div class="flex flex-col items-center gap-4 py-10" in:fade={{ duration: 250 }}>
       <div class="text-[12px] text-red-400 opacity-80">{errorMsg}</div>
       <button
-        class="w-fit inline-flex items-center gap-2 bg-white/[0.06] px-6 py-2 text-[12px] opacity-60 hover:opacity-90 transition border-none text-[#fafafa]"
+        class="w-fit inline-flex items-center gap-2 bg-black/[0.04] dark:bg-white/[0.06] px-6 py-2 text-[12px] opacity-60 hover:opacity-90 transition border-none text-[#1d1d1f] dark:text-[#fafafa]"
         onclick={() => (phase = 'ready')}
       >
         Retry

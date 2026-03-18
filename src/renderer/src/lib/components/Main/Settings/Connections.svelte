@@ -39,7 +39,7 @@
         </div>
       </div>
       <button
-        class="text-[11px] opacity-30 hover:opacity-60 px-2 py-1 bg-transparent transition border-none text-[#fafafa] shrink-0"
+        class="text-[11px] opacity-30 hover:opacity-60 px-2 py-1 bg-transparent transition border-none text-[#1d1d1f] dark:text-[#fafafa] shrink-0"
         onclick={() => remove(conn.id)}
       >
         Remove

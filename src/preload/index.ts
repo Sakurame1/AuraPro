@@ -147,7 +147,10 @@ const api = {
   // Updater
   checkForUpdates: () => ipcRenderer.invoke('updater:check'),
   downloadUpdate: () => ipcRenderer.invoke('updater:download'),
-  installUpdate: () => ipcRenderer.invoke('updater:install')
+  installUpdate: () => ipcRenderer.invoke('updater:install'),
+
+  // Changelog
+  getChangelog: () => ipcRenderer.invoke('app:changelog')
 }
 
 if (process.contextIsolated) {

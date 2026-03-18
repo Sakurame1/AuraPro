@@ -55,14 +55,14 @@
 </script>
 
 {#if visible}
-  <div class="h-full flex flex-col bg-[#0a0a0a] text-[#fafafa]" in:fade={{ duration: 250 }}>
+  <div class="h-full flex flex-col bg-[#f5f5f7] dark:bg-[#0a0a0a] text-[#1d1d1f] dark:text-[#fafafa]" in:fade={{ duration: 250 }}>
     <!-- Header -->
     <div class="flex items-center justify-between {$appInfo?.platform === 'darwin' ? 'pl-[76px]' : 'pl-5'} pr-5 pt-3 pb-2 drag-region">
       <div class="text-[13px] opacity-50">Connections</div>
       <img src={logoImage} class="w-5 h-5 rounded-full dark:invert opacity-40" alt="logo" />
     </div>
 
-    <div class="mx-5 border-b border-white/[0.06]"></div>
+    <div class="mx-5 border-b border-black/[0.06] dark:border-white/[0.06]"></div>
 
     <!-- Content -->
     <div class="flex-1 min-h-0 overflow-y-auto px-5 py-3">
@@ -70,14 +70,14 @@
         <div class="flex flex-col">
           {#each $connections as conn, i (conn.id)}
             <div
-              class="w-full py-3 cursor-pointer group flex items-center gap-3 transition-opacity hover:opacity-100 opacity-70 {i > 0 ? 'border-t border-white/[0.04]' : ''}"
+              class="w-full py-3 cursor-pointer group flex items-center gap-3 transition-opacity hover:opacity-100 opacity-70 {i > 0 ? 'border-t border-black/[0.04] dark:border-white/[0.04]' : ''}"
               role="button"
               tabindex="0"
               onclick={() => connect(conn.id)}
               onkeydown={(e) => e.key === 'Enter' && connect(conn.id)}
               in:fly={{ y: 4, duration: 150, delay: i * 30 }}
             >
-              <div class="w-[6px] h-[6px] rounded-full shrink-0 {conn.type === 'local' ? 'bg-green-400/70' : 'bg-white/10'}"></div>
+              <div class="w-[6px] h-[6px] rounded-full shrink-0 {conn.type === 'local' ? 'bg-green-400/70' : 'bg-black/8 dark:bg-white/10'}"></div>
 
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
@@ -92,12 +92,12 @@
               <div class="shrink-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 {#if $config?.defaultConnectionId !== conn.id}
                   <button
-                    class="p-1.5 opacity-20 hover:opacity-60 text-[10px] transition bg-transparent border-none text-[#fafafa]"
+                    class="p-1.5 opacity-20 hover:opacity-60 text-[10px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
                     onclick={(e) => { e.stopPropagation(); setDefault(conn.id) }}
                   >★</button>
                 {/if}
                 <button
-                  class="p-1.5 opacity-20 hover:text-red-400 hover:opacity-80 text-[10px] transition bg-transparent border-none text-[#fafafa]"
+                  class="p-1.5 opacity-20 hover:text-red-400 hover:opacity-80 text-[10px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
                   onclick={(e) => { e.stopPropagation(); remove(conn.id) }}
                 >✕</button>
               </div>
@@ -111,7 +111,7 @@
 
         <!-- Add button -->
         <button
-          class="mt-4 inline-flex items-center gap-2 text-[13px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#fafafa]"
+          class="mt-4 inline-flex items-center gap-2 text-[13px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
           onclick={() => (view = 'add')}
         >
           + Add connection
@@ -120,7 +120,7 @@
       {:else if view === 'add'}
         <div in:fade={{ duration: 150 }}>
           <button
-            class="text-[12px] opacity-40 hover:opacity-70 transition mb-6 bg-transparent border-none text-[#fafafa]"
+            class="text-[12px] opacity-40 hover:opacity-70 transition mb-6 bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
             onclick={() => { view = 'list'; error = '' }}
           >
             ← Back
@@ -133,14 +133,14 @@
               type="text"
               bind:value={url}
               placeholder="Server URL"
-              class="w-full px-4 py-2.5 bg-white/[0.06] text-[13px] text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
+              class="w-full px-4 py-2.5 bg-black/[0.04] dark:bg-white/[0.06] text-[13px] text-[#1d1d1f] dark:text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
               onkeydown={(e) => e.key === 'Enter' && add()}
             />
             <input
               type="text"
               bind:value={name}
               placeholder="Label (optional)"
-              class="w-full px-4 py-2.5 bg-white/[0.06] text-[13px] text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
+              class="w-full px-4 py-2.5 bg-black/[0.04] dark:bg-white/[0.06] text-[13px] text-[#1d1d1f] dark:text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
             />
             {#if error}
               <span class="text-[11px] text-red-400 opacity-80">{error}</span>

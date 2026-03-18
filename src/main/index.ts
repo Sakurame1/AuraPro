@@ -17,6 +17,7 @@ import {
   dialog
 } from 'electron'
 import path, { join } from 'path'
+import { readFile } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import {
@@ -630,6 +631,18 @@ if (!gotTheLock) {
     ipcMain.handle('updater:check', () => checkForUpdates())
     ipcMain.handle('updater:download', () => downloadUpdate())
     ipcMain.handle('updater:install', () => installUpdate())
+
+    // Changelog
+    ipcMain.handle('app:changelog', async () => {
+      try {
+        const changelogPath = app.isPackaged
+          ? join(process.resourcesPath, 'CHANGELOG.md')
+          : join(app.getAppPath(), 'CHANGELOG.md')
+        return await readFile(changelogPath, 'utf-8')
+      } catch {
+        return null
+      }
+    })
 
     // Misc
     ipcMain.handle('app:reset', () => resetAppHandler())

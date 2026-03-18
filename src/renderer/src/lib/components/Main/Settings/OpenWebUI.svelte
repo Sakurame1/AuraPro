@@ -93,7 +93,7 @@
       <div class="text-[11px] opacity-20 mt-0.5">Set up a local Open WebUI server</div>
     </div>
     <button
-      class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {installing ? 'pointer-events-none opacity-20' : ''}"
+      class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {installing ? 'pointer-events-none opacity-20' : ''}"
       disabled={installing}
       onclick={async () => {
         installing = true
@@ -107,7 +107,7 @@
       }}
     >
       {#if installing}
-        <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+        <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
         Installing…
       {:else}
         Install
@@ -130,7 +130,7 @@
           <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
           <span class="text-[12px] opacity-50">Running</span>
         {:else if serverStatus === 'stopped'}
-          <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+          <div class="w-1.5 h-1.5 rounded-full bg-black/15 dark:bg-white/20"></div>
           <span class="text-[12px] opacity-30">Stopped</span>
         {:else}
           <div class="w-1.5 h-1.5 rounded-full bg-amber-400/60"></div>
@@ -142,12 +142,12 @@
     <div class="flex items-center gap-2">
       {#if isRunning}
         <button
-          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {stopping ? 'pointer-events-none opacity-20' : ''}"
+          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {stopping ? 'pointer-events-none opacity-20' : ''}"
           disabled={stopping}
           onclick={stopServer}
         >
           {#if stopping}
-            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
             Stopping…
           {:else}
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -157,12 +157,12 @@
           {/if}
         </button>
         <button
-          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {restarting ? 'pointer-events-none opacity-20' : ''}"
+          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {restarting ? 'pointer-events-none opacity-20' : ''}"
           disabled={restarting}
           onclick={restartServer}
         >
           {#if restarting}
-            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
             Restarting…
           {:else}
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -173,12 +173,12 @@
         </button>
       {:else}
         <button
-          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {starting ? 'pointer-events-none opacity-20' : ''}"
+          class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {starting ? 'pointer-events-none opacity-20' : ''}"
           disabled={starting}
           onclick={startServer}
         >
           {#if starting}
-            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+            <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
             Starting…
           {:else}
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -190,12 +190,12 @@
       {/if}
 
       <button
-        class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {updating ? 'pointer-events-none opacity-20' : ''}"
+        class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {updating ? 'pointer-events-none opacity-20' : ''}"
         disabled={updating}
         onclick={updatePackage}
       >
         {#if updating}
-          <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+          <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
           Updating…
         {:else}
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -216,8 +216,8 @@
     </div>
     <button
       class="w-9 h-5 rounded-full transition-colors {$config?.localServer?.enabled !== false
-        ? 'bg-white/30'
-        : 'bg-white/[0.08]'} border-none relative"
+        ? 'bg-black/20 dark:bg-white/30'
+        : 'bg-black/[0.06] dark:bg-white/[0.08]'} border-none relative"
       aria-label="Toggle start on launch"
       onclick={() => updateConfig('enabled', $config?.localServer?.enabled === false)}
     >
@@ -236,7 +236,7 @@
     </div>
     <input
       type="number"
-      class="bg-white/[0.06] text-[12px] text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60 w-20 text-right"
+      class="bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60 w-20 text-right"
       value={$config?.localServer?.port ?? 8080}
       onchange={(e) =>
         updateConfig('port', parseInt((e.target as HTMLInputElement).value) || 8080)}
@@ -253,8 +253,8 @@
     <button
       class="w-9 h-5 rounded-full transition-colors {$config?.localServer
         ?.serveOnLocalNetwork
-        ? 'bg-white/30'
-        : 'bg-white/[0.08]'} border-none relative"
+        ? 'bg-black/20 dark:bg-white/30'
+        : 'bg-black/[0.06] dark:bg-white/[0.08]'} border-none relative"
       aria-label="Toggle serve on local network"
       onclick={() =>
         updateConfig('serveOnLocalNetwork', !$config?.localServer?.serveOnLocalNetwork)}
@@ -278,8 +278,8 @@
     <button
       class="w-9 h-5 rounded-full transition-colors {$config?.localServer?.autoUpdate !==
       false
-        ? 'bg-white/30'
-        : 'bg-white/[0.08]'} border-none relative"
+        ? 'bg-black/20 dark:bg-white/30'
+        : 'bg-black/[0.06] dark:bg-white/[0.08]'} border-none relative"
       aria-label="Toggle auto-update"
       onclick={() =>
         updateConfig('autoUpdate', $config?.localServer?.autoUpdate === false)}
@@ -300,7 +300,7 @@
       <div class="text-[11px] opacity-25 mt-0.5">Remove Open WebUI package</div>
     </div>
     <button
-      class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-white/[0.06] transition border-none text-[#fafafa] rounded-xl flex items-center gap-1.5 {uninstalling ? 'pointer-events-none opacity-20' : ''}"
+      class="text-[12px] opacity-40 hover:opacity-70 px-3 py-1.5 bg-black/[0.04] dark:bg-white/[0.06] transition border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl flex items-center gap-1.5 {uninstalling ? 'pointer-events-none opacity-20' : ''}"
       disabled={uninstalling}
       onclick={async () => {
         if (confirm('This will stop the server and remove the Open WebUI package. Continue?')) {
@@ -317,7 +317,7 @@
       }}
     >
       {#if uninstalling}
-        <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"></div>
+        <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
         Uninstalling…
       {:else}
         Uninstall

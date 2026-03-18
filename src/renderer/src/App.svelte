@@ -13,6 +13,14 @@
     config.set(await api.getConfig())
     connections.set(await api.getConnections())
 
+    // Apply saved theme
+    const savedTheme = (await api.getConfig())?.theme ?? 'system'
+    let resolved = savedTheme
+    if (savedTheme === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    document.documentElement.classList.add(resolved)
+
     api.onData((data: any) => {
       if (data.type === 'status:server') {
         serverInfo.update((info) => ({ ...info, status: data.data }))
@@ -39,6 +47,6 @@
   })
 </script>
 
-<main class="w-full h-full bg-[#0a0a0a]">
+<main class="w-full h-full bg-[#f5f5f7] dark:bg-[#0a0a0a]">
   <Main />
 </main>

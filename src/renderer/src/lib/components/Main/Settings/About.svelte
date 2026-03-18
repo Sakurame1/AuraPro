@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte'
+  import { onMount } from 'svelte'
   import { appInfo } from '../../../stores'
 
   let openWebuiVersion = $state<string | null>(null)
@@ -12,14 +12,17 @@
   let downloadPercent = $state(0)
   let updateError = $state<string | null>(null)
 
-  let removeListener: (() => void) | null = null
+  // Changelog state
+  let changelogOpen = $state(false)
+  let changelogLoading = $state(false)
+  let changelogEntries = $state<{ version: string; date: string; body: string }[]>([])
 
   onMount(async () => {
     openWebuiVersion = await window.electronAPI.getPackageVersion('open-webui')
     openTerminalVersion = await window.electronAPI.getPackageVersion('open-terminal')
 
     // Listen for update events from main process
-    const handler = (data: any) => {
+    window.electronAPI.onData((data: any) => {
       switch (data.type) {
         case 'update:checking':
           updateStatus = 'checking'
@@ -45,12 +48,7 @@
           updateError = data.data?.message ?? 'Unknown error'
           break
       }
-    }
-
-    window.electronAPI.onData(handler)
-    removeListener = () => {
-      // electron onData doesn't return an unsubscribe, so we just null out
-    }
+    })
   })
 
   const openGithub = () => {
@@ -81,6 +79,42 @@
 
   const handleInstall = () => {
     window.electronAPI.installUpdate()
+  }
+
+  const toggleChangelog = async () => {
+    changelogOpen = !changelogOpen
+    if (changelogOpen && changelogEntries.length === 0) {
+      changelogLoading = true
+      try {
+        const md = await window.electronAPI.getChangelog()
+        if (md) parseChangelog(md)
+      } finally {
+        changelogLoading = false
+      }
+    }
+  }
+
+  const parseChangelog = (md: string) => {
+    const entries: { version: string; date: string; body: string }[] = []
+    const sections = md.split(/^## /m).slice(1)
+    for (const section of sections) {
+      const headerMatch = section.match(/^\[([^\]]+)\](?:\s*-\s*(.+))?/)
+      if (!headerMatch) continue
+      const version = headerMatch[1]
+      const date = headerMatch[2]?.trim() ?? ''
+      const body = section.slice(section.indexOf('\n') + 1).trim()
+      if (version === 'Unreleased' && !body) continue
+      entries.push({ version, date, body })
+    }
+    changelogEntries = entries
+  }
+
+  const renderMarkdown = (md: string): string => {
+    return md
+      .replace(/^### (.+)$/gm, '<div class="text-[11px] opacity-50 font-semibold mt-3 mb-1">$1</div>')
+      .replace(/^- (.+)$/gm, '<div class="text-[11px] opacity-40 pl-2 leading-relaxed">• $1</div>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.+?)`/g, '<code class="text-[10px] bg-white/[0.06] px-1 py-0.5 rounded">$1</code>')
   }
 </script>
 
@@ -172,6 +206,51 @@
         {/if}
       </div>
     </div>
+  </div>
+
+  <!-- Changelog section -->
+  <div class="py-4">
+    <button
+      class="text-[12px] opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#fafafa] flex items-center gap-1.5"
+      onclick={toggleChangelog}
+    >
+      <svg
+        class="w-3 h-3 transition-transform {changelogOpen ? 'rotate-90' : ''}"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+      What's New
+    </button>
+
+    {#if changelogOpen}
+      <div class="mt-3 max-h-64 overflow-y-auto pr-1">
+        {#if changelogLoading}
+          <div class="text-[11px] opacity-25">Loading…</div>
+        {:else if changelogEntries.length === 0}
+          <div class="text-[11px] opacity-25">No changelog entries yet.</div>
+        {:else}
+          {#each changelogEntries as entry, i}
+            {#if i > 0}
+              <div class="border-t border-white/[0.04] my-3"></div>
+            {/if}
+            <div>
+              <div class="flex items-baseline gap-2">
+                <span class="text-[12px] opacity-60 font-medium">{entry.version}</span>
+                {#if entry.date}
+                  <span class="text-[10px] opacity-20">{entry.date}</span>
+                {/if}
+              </div>
+              {#if entry.body}
+                <div class="mt-1">
+                  {@html renderMarkdown(entry.body)}
+                </div>
+              {/if}
+            </div>
+          {/each}
+        {/if}
+      </div>
+    {/if}
   </div>
 
   <div class="py-4">

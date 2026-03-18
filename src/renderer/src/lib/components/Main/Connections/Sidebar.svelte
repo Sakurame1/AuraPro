@@ -70,14 +70,14 @@
 </script>
 
 <div
-  class="w-[200px] shrink-0 flex flex-col bg-[#0a0a0a] relative"
+  class="w-[200px] shrink-0 flex flex-col bg-[#f5f5f7] dark:bg-[#0a0a0a] relative"
   in:fly={{ x: -200, duration: 200 }}
 >
   <!-- Connections header -->
   <div class="flex items-center justify-between px-4 pt-2 pb-1.5">
     <span class="text-[10px] tracking-wider uppercase opacity-60">Connections</span>
     <button
-      class="opacity-25 hover:opacity-60 transition bg-transparent border-none text-[#fafafa] leading-none"
+      class="opacity-25 hover:opacity-60 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] leading-none"
       onclick={() => {
         onDisconnect()
         onAddView()
@@ -104,8 +104,8 @@
       <div
         class="w-full px-2 py-[6px] rounded-xl group flex items-center gap-2 transition-colors {isLocalDisabled ? 'opacity-40 cursor-default' : 'cursor-pointer'} {activeConnectionId ===
         localConn.id
-          ? 'bg-white/[0.08]'
-          : isLocalDisabled ? '' : 'hover:bg-white/[0.05]'}"
+          ? 'bg-black/[0.06] dark:bg-white/[0.08]'
+          : isLocalDisabled ? '' : 'hover:bg-black/[0.03] dark:bg-white/[0.05]'}"
         role="button"
         tabindex="0"
         onclick={() => !isLocalDisabled && onConnect(localConn.id)}
@@ -114,7 +114,7 @@
         {#if serverStatus === 'starting' || (serverStatus === 'running' && !serverReachable)}
           <div class="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
             <div
-              class="w-2.5 h-2.5 rounded-full border-[1.5px] border-white/30 border-t-transparent animate-spin"
+              class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"
             ></div>
           </div>
         {:else if serverReachable}
@@ -125,14 +125,14 @@
           </div>
         {:else}
           <div class="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
-            <div class="w-2 h-2 rounded-full bg-white/15"></div>
+            <div class="w-2 h-2 rounded-full bg-black/10 dark:bg-white/15"></div>
           </div>
         {/if}
         {#if editingId === localConn.id}
           <!-- svelte-ignore a11y_autofocus -->
           <input
             type="text"
-            class="text-[12px] bg-transparent text-[#fafafa] px-0 py-0 border-none outline-none rounded-md flex-1 min-w-0"
+            class="text-[12px] bg-transparent text-[#1d1d1f] dark:text-[#fafafa] px-0 py-0 border-none outline-none rounded-md flex-1 min-w-0"
             bind:value={editValue}
             autofocus
             onfocus={(e) => e.currentTarget.select()}
@@ -155,7 +155,7 @@
 
         <div class="ml-auto relative shrink-0">
           <button
-            class="opacity-20 hover:opacity-70 transition bg-transparent border-none text-[#fafafa] p-0.5 leading-none"
+            class="opacity-20 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0.5 leading-none"
             onclick={(e) => {
               e.stopPropagation()
               menuOpenId = menuOpenId === 'local' ? null : 'local'
@@ -169,13 +169,13 @@
           {#if menuOpenId === 'local'}
             <div class="fixed inset-0 z-40" onclick={(e) => { e.stopPropagation(); menuOpenId = null }}></div>
             <div
-              class="absolute right-0 top-6 z-50 w-[160px] bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
+              class="absolute right-0 top-6 z-50 w-[160px] bg-white dark:bg-[#1a1a1a]/90 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
               in:fly={{ y: -4, duration: 150 }}
               out:fade={{ duration: 100 }}
             >
               <div class="py-1 px-1.5">
                 <button
-                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
                   onclick={(e) => {
                     e.stopPropagation()
                     menuOpenId = null
@@ -188,7 +188,7 @@
                   Rename
                 </button>
                 <button
-                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
                   onclick={(e) => {
                     e.stopPropagation()
                     menuOpenId = null
@@ -208,15 +208,15 @@
     {/if}
 
     {#if localConn && localInstalled && remoteConnections.length > 0}
-      <div class="my-1 mx-2 border-t border-white/[0.04]"></div>
+      <div class="my-1 mx-2 border-t border-black/[0.04] dark:border-white/[0.04]"></div>
     {/if}
 
     {#each remoteConnections as conn (conn.id)}
       <div
         class="w-full px-2 py-[6px] rounded-xl group flex items-center gap-2 transition-colors cursor-pointer {activeConnectionId ===
         conn.id
-          ? 'bg-white/[0.08]'
-          : 'hover:bg-white/[0.05]'}"
+          ? 'bg-black/[0.06] dark:bg-white/[0.08]'
+          : 'hover:bg-black/[0.03] dark:bg-white/[0.05]'}"
         role="button"
         tabindex="0"
         onclick={() => editingId !== conn.id && onConnect(conn.id)}
@@ -240,7 +240,7 @@
           <!-- svelte-ignore a11y_autofocus -->
           <input
             type="text"
-            class="text-[12px] bg-transparent text-[#fafafa] px-0 py-0 border-none outline-none rounded-md flex-1 min-w-0"
+            class="text-[12px] bg-transparent text-[#1d1d1f] dark:text-[#fafafa] px-0 py-0 border-none outline-none rounded-md flex-1 min-w-0"
             bind:value={editValue}
             autofocus
             onfocus={(e) => e.currentTarget.select()}
@@ -264,7 +264,7 @@
         <!-- Three-dots menu -->
         <div class="ml-auto relative shrink-0">
           <button
-            class="opacity-20 hover:opacity-70 transition bg-transparent border-none text-[#fafafa] p-0.5 leading-none"
+            class="opacity-20 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0.5 leading-none"
             onclick={(e) => {
               e.stopPropagation()
               menuOpenId = menuOpenId === conn.id ? null : conn.id
@@ -278,13 +278,13 @@
           {#if menuOpenId === conn.id}
             <div class="fixed inset-0 z-40" onclick={(e) => { e.stopPropagation(); menuOpenId = null }}></div>
             <div
-              class="absolute right-0 top-6 z-50 w-[160px] bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
+              class="absolute right-0 top-6 z-50 w-[160px] bg-white dark:bg-[#1a1a1a]/90 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
               in:fly={{ y: -4, duration: 150 }}
               out:fade={{ duration: 100 }}
             >
               <div class="py-1 px-1.5">
                 <button
-                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
                   onclick={(e) => {
                     e.stopPropagation()
                     menuOpenId = null
@@ -297,7 +297,7 @@
                   Rename
                 </button>
                 <button
-                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+                  class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
                   onclick={(e) => {
                     e.stopPropagation()
                     menuOpenId = null
@@ -310,7 +310,7 @@
                   Open in Browser
                 </button>
               </div>
-              <div class="mx-3 border-t border-white/[0.06]"></div>
+              <div class="mx-3 border-t border-black/[0.06] dark:border-white/[0.06]"></div>
               <div class="py-1 px-1.5">
                 <button
                   class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-red-500/10 transition bg-transparent border-none text-red-400 rounded-xl"
@@ -335,11 +335,11 @@
 
   <!-- Open Terminal toggle -->
   <div class="px-2 pb-1">
-    <div class="border-t border-white/[0.06] pt-2 pb-1">
+    <div class="border-t border-black/[0.06] dark:border-white/[0.06] pt-2 pb-1">
       <span class="text-[10px] tracking-wider uppercase opacity-25 px-2">Services</span>
     </div>
     <button
-      class="w-full flex items-center gap-2 px-2 py-[6px] rounded-xl text-[12px] transition bg-transparent border-none text-[#fafafa] text-left group {openTerminalStatus === 'started' ? 'opacity-70 hover:opacity-90' : 'opacity-40 hover:opacity-70'} {openTerminalStatus === 'starting' || openTerminalStatus === 'stopping' ? 'pointer-events-none' : ''}"
+      class="w-full flex items-center gap-2 px-2 py-[6px] rounded-xl text-[12px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] text-left group {openTerminalStatus === 'started' ? 'opacity-70 hover:opacity-90' : 'opacity-40 hover:opacity-70'} {openTerminalStatus === 'starting' || openTerminalStatus === 'stopping' ? 'pointer-events-none' : ''}"
       onclick={() => {
         if (openTerminalStatus === 'started') {
           onToggleOtLogs()
@@ -387,7 +387,7 @@
       <!-- Stop button (when running) -->
       {#if openTerminalStatus === 'started'}
         <button
-          class="ml-auto opacity-0 group-hover:opacity-40 hover:!opacity-80 transition bg-transparent border-none text-[#fafafa] p-0 leading-none"
+          class="ml-auto opacity-0 group-hover:opacity-40 hover:!opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 leading-none"
           onclick={(e) => { e.stopPropagation(); onToggleOpenTerminal() }}
           use:tooltip={'Stop Open Terminal'}
         >
@@ -404,18 +404,18 @@
     <div class="fixed inset-0 z-40" onclick={() => (settingsOpen = false)}></div>
 
     <div
-      class="absolute bottom-12 left-2 right-2 z-50 bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
+      class="absolute bottom-12 left-2 right-2 z-50 bg-white dark:bg-[#1a1a1a]/90 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] rounded-2xl shadow-2xl py-0.5 overflow-hidden"
       in:fly={{ y: 8, duration: 150 }}
       out:fade={{ duration: 100 }}
     >
-      <div class="px-3.5 py-2.5 border-b border-white/[0.06]">
+      <div class="px-3.5 py-2.5 border-b border-black/[0.06] dark:border-white/[0.06]">
         <div class="text-[11px] opacity-40">Open WebUI Desktop</div>
         <div class="text-[10px] opacity-20 mt-0.5">{$appInfo?.version ?? ''}</div>
       </div>
 
       <div class="py-1 px-1.5">
         <button
-          class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+          class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
           onclick={() => {
             settingsOpen = false
             onOpenSettings()
@@ -443,7 +443,7 @@
         </button>
 
         <button
-          class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-white/[0.06] transition bg-transparent border-none text-[#fafafa] rounded-xl"
+          class="w-full flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] opacity-50 hover:opacity-90 hover:bg-black/[0.04] dark:bg-white/[0.06] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] rounded-xl"
           onclick={openGithub}
         >
           <svg
@@ -468,7 +468,7 @@
   <!-- Settings button (bottom) -->
   <div class="px-2 pb-3">
     <button
-      class="w-full flex items-center gap-2 px-2 py-[6px] rounded-xl text-[12px] opacity-40 hover:opacity-70 hover:bg-white/[0.05] transition bg-transparent border-none text-[#fafafa] text-left"
+      class="w-full flex items-center gap-2 px-2 py-[6px] rounded-xl text-[12px] opacity-40 hover:opacity-70 hover:bg-black/[0.03] dark:bg-white/[0.05] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] text-left"
       onclick={() => (settingsOpen = !settingsOpen)}
     >
       <svg

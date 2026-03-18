@@ -48,7 +48,7 @@
   }
 </script>
 
-<div class="h-full w-full relative overflow-hidden bg-[#0a0a0a] text-[#fafafa]">
+<div class="h-full w-full relative overflow-hidden bg-[#f5f5f7] dark:bg-[#0a0a0a] text-[#1d1d1f] dark:text-[#fafafa]">
   <!-- Video background -->
   <div class="absolute inset-0 overflow-hidden">
     <video
@@ -83,7 +83,7 @@
                 type="text"
                 bind:value={url}
                 placeholder="e.g. https://your-server.com"
-                class="flex-1 px-4 py-2.5 bg-white/[0.06] text-[13px] text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
+                class="flex-1 px-4 py-2.5 bg-black/[0.04] dark:bg-white/[0.06] text-[13px] text-[#1d1d1f] dark:text-[#fafafa] placeholder:opacity-20 outline-none focus:bg-white/[0.1] transition no-drag border-none"
                 onkeydown={(e) => e.key === 'Enter' && connect()}
               />
 
@@ -108,7 +108,7 @@
 
           <div class="mt-6">
             <button
-              class="text-sm opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#fafafa]"
+              class="text-sm opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
               onclick={() => (view = 'install')}
             >
               Or install locally →
