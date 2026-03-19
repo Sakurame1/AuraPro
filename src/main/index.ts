@@ -85,6 +85,10 @@ log.transports.file.resolvePathFn = () => getLogFilePath('main')
 
 import icon from '../../resources/icon.png?asset'
 
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox')
+}
+
 // ─── State ──────────────────────────────────────────────
 
 let mainWindow: BrowserWindow | null = null
