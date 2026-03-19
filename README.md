@@ -47,7 +47,7 @@ npm run build:linux
 
 ## License 📜
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. For details, see [LICENSE](LICENSE).
+This project is licensed under the **AGPL-3.0**. For details, see [LICENSE](LICENSE).
 
 ## Stay Tuned! 🌟
 
