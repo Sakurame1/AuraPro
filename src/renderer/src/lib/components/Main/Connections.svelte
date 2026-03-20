@@ -61,7 +61,7 @@
   let llamaCppInfo = $state<{ url?: string; pid?: number } | null>(null)
   let llamaCppSetupStatus = $state('')
 
-  const startInstall = async () => {
+  const startInstall = async (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean }) => {
     installPhase = 'working'
     installError = ''
     installStatus = ''
@@ -80,6 +80,14 @@
       if (!pythonReady) {
         const pythonOk = await window.electronAPI.installPython()
         if (!pythonOk) throw new Error('Failed to install Python. Please try again.')
+      }
+
+      // Start optional services in parallel — they don't depend on Open WebUI
+      if (options?.installOpenTerminal) {
+        toggleOpenTerminal()
+      }
+      if (options?.installLlamaCpp) {
+        toggleLlamaCpp()
       }
 
       const ok = await window.electronAPI.installPackage()

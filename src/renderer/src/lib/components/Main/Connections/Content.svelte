@@ -4,6 +4,7 @@
   import { connections, config, serverInfo, appState } from '../../../stores'
   import i18n from '../../../i18n'
   import LocalInstall from '../../Setup/LocalInstall.svelte'
+  import GetStartedModal from './GetStartedModal.svelte'
   import landingVideo from '../../../../assets/landing.mp4'
 
   interface Props {
@@ -23,7 +24,7 @@
     connecting: boolean
     error: string
     autoInstall: boolean
-    onStartInstall: () => void
+    onStartInstall: (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean }) => void
     onAddConnection: () => void
     onSetView: (v: string) => void
   }
@@ -49,6 +50,8 @@
     onAddConnection,
     onSetView
   }: Props = $props()
+
+  let showGetStartedModal = $state(false)
 
   const isInitializing = $derived($appState === 'initializing')
   const insufficientStorage = $derived(
@@ -282,7 +285,13 @@
                 {#if !localInstalled}
                   <button
                     class="inline-flex items-center gap-2 bg-black dark:bg-white px-6 py-2 rounded-xl text-white dark:text-black text-[13px] transition hover:bg-gray-800 dark:hover:bg-gray-100 border-none disabled:opacity-50"
-                    onclick={onStartInstall}
+                    onclick={() => {
+                      if (installPhase === 'error') {
+                        onStartInstall()
+                      } else {
+                        showGetStartedModal = true
+                      }
+                    }}
                     disabled={installPhase === 'working'}
                   >
                     {#if installPhase === 'working'}
@@ -383,5 +392,15 @@
         </div>
       {/if}
     </div>
+  {/if}
+
+  {#if showGetStartedModal}
+    <GetStartedModal
+      onContinue={(options) => {
+        showGetStartedModal = false
+        onStartInstall(options)
+      }}
+      onCancel={() => { showGetStartedModal = false }}
+    />
   {/if}
 </div>
