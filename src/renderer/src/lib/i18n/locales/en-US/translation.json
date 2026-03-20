@@ -28,6 +28,7 @@
   "common.stopping": "Stopping…",
   "common.restart": "Restart",
   "common.restarting": "Restarting…",
+  "common.refresh": "Refresh",
   "common.download": "Download",
   "common.downloading": "Downloading…",
   "common.reset": "Reset",
@@ -114,6 +115,7 @@
   "logs.llamaCppLogs": "llama.cpp Logs",
   "logs.copyLogs": "Copy logs",
 
+  "statusBar.local": "Local",
   "statusBar.server": "Open WebUI",
   "statusBar.serverRunning": "Open WebUI is running",
   "statusBar.serverStopped": "Open WebUI is not running",

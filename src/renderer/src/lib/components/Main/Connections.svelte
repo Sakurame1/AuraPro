@@ -13,17 +13,16 @@
     onOpenSettings: () => void
     sidebarOpen: boolean
     activeConnectionName?: string
-    isLocalConnection?: boolean
-    showingLogs?: boolean
   }
 
   let {
     onOpenSettings,
     sidebarOpen,
-    activeConnectionName = $bindable(''),
-    isLocalConnection = $bindable(false),
-    showingLogs = $bindable(false)
+    activeConnectionName = $bindable('')
   }: Props = $props()
+
+  let isLocalConnection = $state(false)
+  let showingLogs = $state(false)
 
   let url = $state('')
   let connecting = $state(false)
@@ -60,6 +59,7 @@
   // Llama Server state
   let llamaCppStatus = $state<string | null>(null)
   let llamaCppInfo = $state<{ url?: string; pid?: number } | null>(null)
+  let llamaCppSetupStatus = $state('')
 
   const startInstall = async () => {
     installPhase = 'working'
@@ -73,6 +73,13 @@
       if (disk?.free >= 0 && disk.free < MINIMUM_DISK_BYTES) {
         const availableGB = (disk.free / (1024 * 1024 * 1024)).toFixed(1)
         throw new Error(`Not enough disk space. At least 5 GB is required (${availableGB} GB available).`)
+      }
+
+      // Ensure Python and uv are installed before attempting package install
+      const pythonReady = await window.electronAPI.getPythonStatus()
+      if (!pythonReady) {
+        const pythonOk = await window.electronAPI.installPython()
+        if (!pythonOk) throw new Error('Failed to install Python. Please try again.')
       }
 
       const ok = await window.electronAPI.installPackage()
@@ -289,9 +296,13 @@
       if (data.type === 'status:llamacpp') {
         llamaCppStatus = data.data
       }
+      if (data.type === 'status:llamacpp-setup') {
+        llamaCppSetupStatus = data.data ?? ''
+      }
       if (data.type === 'llamacpp:ready') {
         llamaCppInfo = data.data
         llamaCppStatus = 'started'
+        llamaCppSetupStatus = ''
       }
       if (data.type === 'status:install') {
         installStatus = data.data ?? ''
@@ -413,10 +424,15 @@
     <LogPanel
       {activeLog}
       serviceReady={activeLog === 'server'
-        ? (serverStatus === 'running' && !!serverReachable)
+        ? serverStatus === 'started'
         : activeLog === 'open-terminal'
           ? openTerminalStatus === 'started'
           : llamaCppStatus === 'started'}
+      statusText={activeLog === 'server'
+        ? (serverStatus === 'starting' ? 'Starting Open WebUI…' : serverStatus === 'running' && !serverReachable ? 'Waiting for server…' : installStatus || '')
+        : activeLog === 'open-terminal'
+          ? (openTerminalStatus === 'starting' ? 'Starting Open Terminal…' : '')
+          : (llamaCppSetupStatus || (llamaCppStatus === 'starting' ? 'Starting llama-server…' : llamaCppStatus === 'setting-up' ? 'Setting up llama.cpp…' : ''))}
       connectPty={getConnectPty(activeLog)}
       disconnectPty={getDisconnectPty(activeLog)}
       readonly={activeLog !== 'server'}
@@ -433,6 +449,18 @@
     {llamaCppStatus}
     {activeLog}
     onSelectLog={selectLog}
+    onStartServer={async () => {
+      if (!localInstalled) {
+        // Not installed — trigger full install (handles Python/uv + package)
+        startInstall()
+        return
+      }
+      // Already installed — start the server
+      await window.electronAPI.startServer()
+      // Force-refresh serverInfo immediately (don't wait for 3s poll)
+      const info = await window.electronAPI.getServerInfo()
+      serverInfo.set(info)
+    }}
     onToggleOpenTerminal={toggleOpenTerminal}
     onToggleLlamaCpp={toggleLlamaCpp}
   />

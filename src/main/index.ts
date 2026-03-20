@@ -350,6 +350,9 @@ const startServerHandler = async (): Promise<boolean> => {
     SERVER_STATUS = 'started'
     log.info('Server started:', SERVER_URL, SERVER_PID)
     sendToRenderer('status:server', SERVER_STATUS)
+
+    // Auto-push PTY port so an already-open log panel picks up live output
+    connectPtyPort(pid)
     updateTray()
 
     checkUrlAndOpen(SERVER_URL, async () => {
@@ -387,9 +390,12 @@ const connectPtyPort = (pid?: number): void => {
   const { port1, port2 } = new MessageChannelMain()
 
   if (!targetPid) {
-    // No server running — send port with a status message
-    log.info('pty:connect — no active server')
-    port1.postMessage({ type: 'output', data: '[No active server process]\r\n' })
+    if (SERVER_STATUS === 'starting') {
+      log.info('pty:connect — server is starting, no PID yet')
+    } else {
+      log.info('pty:connect — no active server')
+      port1.postMessage({ type: 'output', data: '[No active server process]\r\n' })
+    }
     mainWindow.webContents.postMessage('pty:port', { pid: 0 }, [port2])
     return
   }
@@ -997,19 +1003,7 @@ if (!gotTheLock) {
     tray.setToolTip('Open WebUI')
     updateTray()
 
-    // Set up menus
-    const defaultMenu = Menu.getApplicationMenu()
-    const menuTemplate = defaultMenu ? defaultMenu.items.map((item) => item) : []
-    menuTemplate.push({
-      label: 'Action',
-      submenu: [
-        {
-          label: 'Reset',
-          click: () => resetAppHandler()
-        }
-      ]
-    })
-    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate))
+
 
     // Global shortcut
     registerGlobalShortcut(CONFIG.globalShortcut)

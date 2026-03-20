@@ -2,6 +2,7 @@
   import { fade } from 'svelte/transition'
   import i18n from '../../../i18n'
   import { tooltip } from '../../../actions/tooltip'
+  import trayIcon from '../../../../../../../resources/tray.png'
 
   interface Props {
     serverStatus: string | undefined
@@ -10,6 +11,7 @@
     llamaCppStatus: string | null
     activeLog: string | null
     onSelectLog: (log: string) => void
+    onStartServer: () => void
     onToggleOpenTerminal: () => void
     onToggleLlamaCpp: () => void
   }
@@ -21,14 +23,15 @@
     llamaCppStatus,
     activeLog,
     onSelectLog,
+    onStartServer,
     onToggleOpenTerminal,
     onToggleLlamaCpp
   }: Props = $props()
 
   // Derived server state
-  const serverRunning = $derived(serverStatus === 'running' && serverReachable)
+  const serverRunning = $derived(serverStatus === 'started' && serverReachable)
   const serverStarting = $derived(
-    serverStatus === 'starting' || (serverStatus === 'running' && !serverReachable)
+    serverStatus === 'starting' || (serverStatus === 'started' && !serverReachable)
   )
 
   const otRunning = $derived(openTerminalStatus === 'started')
@@ -43,37 +46,46 @@
 </script>
 
 <div
-  class="shrink-0 flex items-center gap-0.5 px-2 py-1 border-t border-black/[0.06] dark:border-white/[0.06] bg-[#f5f5f7] dark:bg-[#0a0a0a]"
+  class="shrink-0 flex items-center gap-1 px-3 h-7 border-t border-black/[0.08] dark:border-white/[0.08] bg-[#ebebed] dark:bg-[#111111]"
   in:fade={{ duration: 150 }}
 >
-  <!-- Server status -->
+  <!-- Local label -->
+  <!-- Open WebUI logo mark -->
+  <img src={trayIcon} alt="" class="w-3.5 opacity-30 mx-0.5 shrink-0" />
+
+  <!-- Open WebUI status -->
   <button
-    class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'server'
-      ? 'bg-black/[0.06] dark:bg-white/[0.08] opacity-70'
-      : 'opacity-35 hover:opacity-60 hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'}"
-    onclick={() => onSelectLog('server')}
+    class="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] transition-all bg-transparent border-none cursor-pointer text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'server'
+      ? 'bg-black/[0.08] dark:bg-white/[0.1] opacity-90'
+      : 'opacity-50 hover:opacity-80 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'}"
+    onclick={() => {
+      if (!serverRunning && !serverStarting) {
+        onStartServer()
+      }
+      onSelectLog('server')
+    }}
     use:tooltip={serverRunning
       ? $i18n.t('statusBar.serverRunning')
       : serverStarting
         ? $i18n.t('common.starting')
         : $i18n.t('statusBar.serverStopped')}
   >
-    <div class="w-[6px] h-[6px] shrink-0 rounded-full {serverRunning
-      ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.5)]'
+    <div class="w-[7px] h-[7px] shrink-0 rounded-full {serverRunning
+      ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.6)]'
       : serverStarting
-        ? 'bg-amber-400/60 animate-pulse'
-        : 'bg-black/10 dark:bg-white/15'}">
+        ? 'bg-amber-400 animate-pulse'
+        : 'bg-black/15 dark:bg-white/20'}">
     </div>
     <span>{$i18n.t('statusBar.server')}</span>
   </button>
 
-  <div class="w-px h-2.5 bg-black/[0.06] dark:bg-white/[0.06] mx-0.5"></div>
+  <div class="w-px h-3 bg-black/[0.08] dark:bg-white/[0.08] mx-0.5"></div>
 
   <!-- Open Terminal status -->
   <button
-    class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'open-terminal'
-      ? 'bg-black/[0.06] dark:bg-white/[0.08] opacity-70'
-      : 'opacity-35 hover:opacity-60 hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'}"
+    class="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] transition-all bg-transparent border-none cursor-pointer text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'open-terminal'
+      ? 'bg-black/[0.08] dark:bg-white/[0.1] opacity-90'
+      : 'opacity-50 hover:opacity-80 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'}"
     onclick={() => {
       if (!otRunning && !otStarting) {
         onToggleOpenTerminal()
@@ -94,24 +106,24 @@
           ? $i18n.t('sidebar.tooltip.clickToRetry')
           : $i18n.t('sidebar.tooltip.startTerminalServer')}
   >
-    <div class="w-[6px] h-[6px] shrink-0 rounded-full {otRunning
-      ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.5)]'
+    <div class="w-[7px] h-[7px] shrink-0 rounded-full {otRunning
+      ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.6)]'
       : otStarting
-        ? 'bg-amber-400/60 animate-pulse'
+        ? 'bg-amber-400 animate-pulse'
         : otFailed
-          ? 'bg-red-400/70'
-          : 'bg-black/10 dark:bg-white/15'}">
+          ? 'bg-red-400'
+          : 'bg-black/15 dark:bg-white/20'}">
     </div>
     <span>{$i18n.t('sidebar.openTerminal')}</span>
   </button>
 
-  <div class="w-px h-2.5 bg-black/[0.06] dark:bg-white/[0.06] mx-0.5"></div>
+  <div class="w-px h-3 bg-black/[0.08] dark:bg-white/[0.08] mx-0.5"></div>
 
   <!-- llama.cpp status -->
   <button
-    class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'llama-server'
-      ? 'bg-black/[0.06] dark:bg-white/[0.08] opacity-70'
-      : 'opacity-35 hover:opacity-60 hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'}"
+    class="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] transition-all bg-transparent border-none cursor-pointer text-[#1d1d1f] dark:text-[#fafafa] {activeLog === 'llama-server'
+      ? 'bg-black/[0.08] dark:bg-white/[0.1] opacity-90'
+      : 'opacity-50 hover:opacity-80 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'}"
     onclick={() => {
       if (!lsRunning && !lsStarting) {
         onToggleLlamaCpp()
@@ -132,13 +144,13 @@
           ? $i18n.t('sidebar.tooltip.clickToRetry')
           : $i18n.t('sidebar.tooltip.startLlamaServer')}
   >
-    <div class="w-[6px] h-[6px] shrink-0 rounded-full {lsRunning
-      ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.5)]'
+    <div class="w-[7px] h-[7px] shrink-0 rounded-full {lsRunning
+      ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.6)]'
       : lsStarting
-        ? 'bg-amber-400/60 animate-pulse'
+        ? 'bg-amber-400 animate-pulse'
         : lsFailed
-          ? 'bg-red-400/70'
-          : 'bg-black/10 dark:bg-white/15'}">
+          ? 'bg-red-400'
+          : 'bg-black/15 dark:bg-white/20'}">
     </div>
     <span>{$i18n.t('sidebar.llamaCpp')}</span>
   </button>

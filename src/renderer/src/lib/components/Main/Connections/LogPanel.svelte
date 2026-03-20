@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { fly, fade } from 'svelte/transition'
+  import { fly } from 'svelte/transition'
   import i18n from '../../../i18n'
   import LogViewer from '../../common/LogViewer.svelte'
 
   interface Props {
     activeLog: 'server' | 'open-terminal' | 'llama-server'
     serviceReady: boolean
+    statusText?: string
     connectPty: (callback: (data: string) => void) => void
     disconnectPty: () => void
     readonly?: boolean
@@ -17,6 +18,7 @@
   let {
     activeLog,
     serviceReady,
+    statusText = '',
     connectPty,
     disconnectPty,
     readonly = false,
@@ -30,6 +32,7 @@
   let startY = 0
   let startHeight = 0
   let copied = $state(false)
+  let refreshKey = $state(0)
 
   let logViewerRef: LogViewer | undefined = $state()
 
@@ -70,7 +73,7 @@
 </script>
 
 <div
-  class="shrink-0 flex flex-col border-t border-black/[0.08] dark:border-white/[0.08] bg-[#0a0a0a] overflow-hidden"
+  class="shrink-0 flex flex-col border-t border-black/[0.1] dark:border-white/[0.1] bg-[#0a0a0a] overflow-hidden"
   style="height: {panelHeight}px"
   in:fly={{ y: 60, duration: 200 }}
   out:fly={{ y: 60, duration: 150 }}
@@ -78,25 +81,25 @@
   <!-- Drag handle -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="h-1 shrink-0 cursor-ns-resize group flex items-center justify-center hover:bg-white/[0.04] transition {dragging ? 'bg-white/[0.06]' : ''}"
+    class="h-[6px] shrink-0 cursor-ns-resize group flex items-center justify-center hover:bg-white/[0.06] transition {dragging ? 'bg-white/[0.08]' : ''}"
     onmousedown={onDragStart}
   >
-    <div class="w-8 h-[2px] rounded-full bg-white/[0.08] group-hover:bg-white/[0.15] transition"></div>
+    <div class="w-10 h-[3px] rounded-full bg-white/[0.12] group-hover:bg-white/[0.25] transition"></div>
   </div>
 
   <!-- Header bar -->
-  <div class="flex items-center justify-between px-3 py-1 shrink-0">
+  <div class="flex items-center justify-between px-3 py-1 shrink-0 border-b border-white/[0.06]">
     <div class="flex items-center gap-2">
-      <span class="text-[10px] uppercase tracking-wider text-white/25">{logLabels[activeLog]?.() ?? activeLog}</span>
+      <span class="text-[11px] uppercase tracking-wider text-white/40 font-medium">{logLabels[activeLog]?.() ?? activeLog}</span>
     </div>
-    <div class="flex items-center gap-1">
+    <div class="flex items-center gap-0.5">
       <!-- Copy button -->
       <button
-        class="p-1 rounded-md opacity-25 hover:opacity-60 hover:bg-white/[0.06] transition bg-transparent border-none text-white cursor-pointer"
+        class="p-1 rounded-md opacity-40 hover:opacity-80 hover:bg-white/[0.08] transition bg-transparent border-none text-white cursor-pointer"
         onclick={copyLogs}
         title={$i18n.t('logs.copyLogs')}
       >
-        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           {#if copied}
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           {:else}
@@ -104,13 +107,23 @@
           {/if}
         </svg>
       </button>
+      <!-- Refresh button -->
+      <button
+        class="p-1 rounded-md opacity-40 hover:opacity-80 hover:bg-white/[0.08] transition bg-transparent border-none text-white cursor-pointer"
+        onclick={() => { disconnectPty(); refreshKey++ }}
+        title={$i18n.t('common.refresh')}
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M20.015 4.356v4.992m0 0h-4.992m4.993 0l-3.181-3.183a8.25 8.25 0 00-13.803 3.7" />
+        </svg>
+      </button>
       <!-- Close button -->
       <button
-        class="p-1 rounded-md opacity-25 hover:opacity-60 hover:bg-white/[0.06] transition bg-transparent border-none text-white cursor-pointer"
+        class="p-1 rounded-md opacity-40 hover:opacity-80 hover:bg-white/[0.08] transition bg-transparent border-none text-white cursor-pointer"
         onclick={onClose}
         title={$i18n.t('common.close')}
       >
-        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -120,7 +133,7 @@
   <!-- Log content -->
   <div class="flex-1 min-h-0 relative overflow-hidden">
     {#if serviceReady}
-      {#key activeLog}
+      {#key `${activeLog}-${refreshKey}`}
         <LogViewer
           bind:this={logViewerRef}
           connect={connectPty}
@@ -132,9 +145,9 @@
       {/key}
     {:else}
       <div class="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
-        <div class="flex flex-col items-center gap-2">
-          <div class="w-4 h-4 rounded-full border-2 border-white/20 border-t-white/60 animate-spin"></div>
-          <span class="text-[10px] text-white/40">{$i18n.t('common.starting')}</span>
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin"></div>
+          <span class="text-[11px] text-white/50">{statusText || $i18n.t('common.starting')}</span>
         </div>
       </div>
     {/if}

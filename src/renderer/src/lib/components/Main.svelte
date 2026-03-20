@@ -11,8 +11,6 @@
   let settingsOpen = $state(false)
   let sidebarOpen = $state(true)
   let activeConnectionName = $state('')
-  let isLocalConnection = $state(false)
-  let showingLogs = $state(false)
 
   onMount(async () => {
     connections.set(await window.electronAPI.getConnections())
@@ -62,37 +60,22 @@
       <div class="flex-1 flex items-center justify-center">
         <span class="text-[11px] opacity-80">{activeConnectionName || $i18n.t('app.name')}</span>
       </div>
-      {#if isLocalConnection}
-        <div class="pr-3 shrink-0 flex items-center">
+      <div class="pr-3 flex items-center shrink-0 translate-y-[0.5px]">
+        {#if activeConnectionName}
           <button
-            class="opacity-20 hover:opacity-50 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] no-drag"
-            onclick={() => (showingLogs = !showingLogs)}
-            use:tooltip={showingLogs ? $i18n.t('sidebar.tooltip.backToOpenWebUI') : $i18n.t('sidebar.tooltip.showLogs')}
+            class="opacity-40 hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] no-drag cursor-pointer"
+            onclick={() => {
+              const wv = document.querySelector('webview[style*="display: flex"]') as any
+              if (wv?.reload) wv.reload()
+            }}
+            use:tooltip={$i18n.t('common.refresh')}
           >
-            <svg
-              class="w-[14px] h-[14px]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              {#if showingLogs}
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
-                />
-              {:else}
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"
-                />
-              {/if}
+            <svg class="w-[13px] h-[13px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M20.015 4.356v4.992m0 0h-4.992m4.993 0l-3.181-3.183a8.25 8.25 0 00-13.803 3.7" />
             </svg>
           </button>
-        </div>
-      {/if}
+        {/if}
+      </div>
     </div>
 
     <!-- Content area below top bar -->
@@ -100,8 +83,6 @@
       <Connections
         {sidebarOpen}
         bind:activeConnectionName
-        bind:isLocalConnection
-        bind:showingLogs
         onOpenSettings={() => (settingsOpen = true)}
       />
     </div>
