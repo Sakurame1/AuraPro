@@ -405,6 +405,11 @@
   {#if activeLog}
     <LogPanel
       {activeLog}
+      serviceReady={activeLog === 'server'
+        ? (serverStatus === 'running' && !!serverReachable)
+        : activeLog === 'open-terminal'
+          ? openTerminalStatus === 'started'
+          : llamaCppStatus === 'started'}
       connectPty={getConnectPty(activeLog)}
       disconnectPty={getDisconnectPty(activeLog)}
       readonly={activeLog !== 'server'}
