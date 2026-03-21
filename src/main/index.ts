@@ -564,6 +564,7 @@ const resetAppHandler = async () => {
     }
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()
+    CONFIG = await getConfig() // reload from defaults since config.json was deleted
     new Notification({ title: 'Open WebUI', body: 'Application has been reset.' }).show()
   } catch (error) {
     log.error('Failed to reset:', error)
