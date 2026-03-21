@@ -42,6 +42,7 @@
   "common.stopped": "停止中",
   "common.failed": "失敗",
   "common.unknown": "不明",
+  "common.experimental": "実験的",
   "common.copied": "✓",
 
   "error.installFailedGeneric": "インストールに失敗しました",
@@ -212,6 +213,7 @@
   "settings.inference.extraArgumentsPlaceholder": "例: --model /path/to/model.gguf -ngl 99",
   "settings.inference.redownload": "再ダウンロード",
   "settings.inference.variantDefaultMetal": "デフォルト (Metal)",
+  "settings.inference.variantAuto": "自動（推奨）",
   "settings.inference.variantCPU": "CPU",
   "settings.inference.checkForUpdates": "アップデートを確認",
   "settings.inference.checking": "確認中…",

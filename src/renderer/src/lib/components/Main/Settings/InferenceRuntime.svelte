@@ -52,14 +52,17 @@
   })())
 
   const variantOptions = $derived((() => {
-    if (platform === 'darwin') return [{ value: 'cpu', label: $i18n.t('settings.inference.variantDefaultMetal') }]
+    const autoOption = { value: 'auto', label: $i18n.t('settings.inference.variantAuto') }
+    if (platform === 'darwin') return [autoOption, { value: 'cpu', label: $i18n.t('settings.inference.variantDefaultMetal') }]
     if (platform === 'win32') return [
+      autoOption,
       { value: 'cpu', label: $i18n.t('settings.inference.variantCPU') },
       { value: 'cuda-12.4', label: 'CUDA 12.4' },
       { value: 'cuda-13.1', label: 'CUDA 13.1' },
       { value: 'vulkan', label: 'Vulkan' }
     ]
     return [
+      autoOption,
       { value: 'cpu', label: $i18n.t('settings.inference.variantCPU') },
       { value: 'vulkan', label: 'Vulkan' },
       { value: 'rocm', label: 'ROCm' }
@@ -179,7 +182,10 @@
   <div class="py-4">
     <div class="flex items-center justify-between mb-3">
       <div>
-        <div class="text-[13px] opacity-70">{$i18n.t('settings.inference.llamaServer')}</div>
+        <div class="text-[13px] opacity-70 flex items-center gap-1.5">
+          {$i18n.t('settings.inference.llamaServer')}
+          <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 uppercase tracking-wide font-medium">{$i18n.t('common.experimental')}</span>
+        </div>
         <div class="text-[11px] opacity-25 mt-0.5">
           {$i18n.t('settings.inference.llamaServerDesc')}
         </div>
@@ -387,7 +393,7 @@
       onchange={(e) => updateConfig('variant', (e.target as HTMLSelectElement).value)}
     >
       {#each variantOptions as opt}
-        <option value={opt.value} selected={($config?.llamaCpp?.variant ?? 'cpu') === opt.value}>{opt.label}</option>
+        <option value={opt.value} selected={($config?.llamaCpp?.variant ?? 'auto') === opt.value}>{opt.label}</option>
       {/each}
     </select>
   </div>

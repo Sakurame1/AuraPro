@@ -42,6 +42,7 @@
   "common.stopped": "已停止",
   "common.failed": "失敗",
   "common.unknown": "未知",
+  "common.experimental": "實驗性",
   "common.copied": "✓",
 
   "error.installFailedGeneric": "安裝失敗",
@@ -212,6 +213,7 @@
   "settings.inference.extraArgumentsPlaceholder": "例如 --model /path/to/model.gguf -ngl 99",
   "settings.inference.redownload": "重新下載",
   "settings.inference.variantDefaultMetal": "預設 (Metal)",
+  "settings.inference.variantAuto": "自動（建議）",
   "settings.inference.variantCPU": "CPU",
   "settings.inference.checkForUpdates": "檢查更新",
   "settings.inference.checking": "檢查中…",

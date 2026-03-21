@@ -334,6 +334,8 @@
     window.electronAPI.getLlamaCppInfo().then((info: any) => {
       if (info?.status) {
         llamaCppStatus = info.status
+      }
+      if (info?.binaryPath || info?.status) {
         llamaCppInfo = info
       }
     })
@@ -456,6 +458,7 @@
     {serverReachable}
     {openTerminalStatus}
     {llamaCppStatus}
+    llamaCppInstalled={!!llamaCppInfo?.binaryPath}
     {activeLog}
     onSelectLog={selectLog}
     onStartServer={async () => {

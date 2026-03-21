@@ -42,6 +42,7 @@
   "common.stopped": "중지됨",
   "common.failed": "실패",
   "common.unknown": "알 수 없음",
+  "common.experimental": "실험적",
   "common.copied": "✓",
 
   "error.installFailedGeneric": "설치 실패",
@@ -212,6 +213,7 @@
   "settings.inference.extraArgumentsPlaceholder": "예: --model /path/to/model.gguf -ngl 99",
   "settings.inference.redownload": "다시 다운로드",
   "settings.inference.variantDefaultMetal": "기본값 (Metal)",
+  "settings.inference.variantAuto": "자동 (권장)",
   "settings.inference.variantCPU": "CPU",
   "settings.inference.checkForUpdates": "업데이트 확인",
   "settings.inference.checking": "확인 중…",

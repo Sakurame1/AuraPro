@@ -9,6 +9,7 @@
     serverReachable: boolean | undefined
     openTerminalStatus: string | null
     llamaCppStatus: string | null
+    llamaCppInstalled: boolean
     activeLog: string | null
     onSelectLog: (log: string) => void
     onStartServer: () => void
@@ -21,6 +22,7 @@
     serverReachable,
     openTerminalStatus,
     llamaCppStatus,
+    llamaCppInstalled,
     activeLog,
     onSelectLog,
     onStartServer,
@@ -51,7 +53,7 @@
 >
   <!-- Local label -->
   <!-- Open WebUI logo mark -->
-  <img src={trayIcon} alt="" class="w-3.5 opacity-30 mx-0.5 shrink-0" />
+  <img src={trayIcon} alt="" class="w-3.5 opacity-30 mx-0.5 shrink-0 invert dark:invert-0" />
 
   <!-- Open WebUI status -->
   <button
@@ -117,6 +119,7 @@
     <span>{$i18n.t('sidebar.openTerminal')}</span>
   </button>
 
+  {#if llamaCppInstalled || llamaCppStatus}
   <div class="w-px h-3 bg-black/[0.08] dark:bg-white/[0.08] mx-0.5"></div>
 
   <!-- llama.cpp status -->
@@ -154,4 +157,5 @@
     </div>
     <span>{$i18n.t('sidebar.llamaCpp')}</span>
   </button>
+  {/if}
 </div>

@@ -42,6 +42,7 @@
   "common.stopped": "Gestoppt",
   "common.failed": "Fehlgeschlagen",
   "common.unknown": "Unbekannt",
+  "common.experimental": "Experimentell",
   "common.copied": "✓",
 
   "error.installFailedGeneric": "Installation fehlgeschlagen",
@@ -212,6 +213,7 @@
   "settings.inference.extraArgumentsPlaceholder": "z.B. --model /path/to/model.gguf -ngl 99",
   "settings.inference.redownload": "Erneut herunterladen",
   "settings.inference.variantDefaultMetal": "Standard (Metal)",
+  "settings.inference.variantAuto": "Automatisch (empfohlen)",
   "settings.inference.variantCPU": "CPU",
   "settings.inference.checkForUpdates": "Nach Updates suchen",
   "settings.inference.checking": "Suche…",

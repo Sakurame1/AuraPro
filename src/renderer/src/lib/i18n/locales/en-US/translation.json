@@ -44,6 +44,7 @@
   "common.stopped": "Stopped",
   "common.failed": "Failed",
   "common.unknown": "Unknown",
+  "common.experimental": "Experimental",
   "common.copied": "✓",
 
 
@@ -226,6 +227,7 @@
   "settings.inference.extraArgumentsDesc": "Additional CLI flags for llama-server",
   "settings.inference.extraArgumentsPlaceholder": "e.g. --model /path/to/model.gguf -ngl 99",
   "settings.inference.redownload": "Re-download",
+  "settings.inference.variantAuto": "Auto (recommended)",
   "settings.inference.variantDefaultMetal": "Default (Metal)",
   "settings.inference.variantCPU": "CPU",
   "settings.inference.checkForUpdates": "Check for Updates",
