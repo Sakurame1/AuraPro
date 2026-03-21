@@ -815,12 +815,12 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   openTerminal: {
     enabled: false,
-    port: 8000,
+    port: 39284,
     cwd: ''
   },
   llamaCpp: {
     enabled: false,
-    port: 8081,
+    port: 18881,
     version: 'latest',
     variant: 'cpu',
     extraArgs: []

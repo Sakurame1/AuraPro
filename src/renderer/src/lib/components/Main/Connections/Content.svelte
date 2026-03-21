@@ -317,6 +317,7 @@
                   {/if}
                 {/if}
 
+                {#if installPhase !== 'working'}
                 <div class="mt-6">
                   <button
                     class="text-sm opacity-40 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa]"
@@ -325,6 +326,7 @@
                     {$i18n.t('setup.connectToServer')}
                   </button>
                 </div>
+                {/if}
               </div>
             </div>
           </div>

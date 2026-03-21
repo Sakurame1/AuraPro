@@ -113,17 +113,25 @@
       const maxWait = 120000
       const pollInterval = 2000
       const startTime = Date.now()
+      let reachable = false
       while (Date.now() - startTime < maxWait) {
         const si = await window.electronAPI.getServerInfo()
-        if (si?.reachable) break
+        if (si?.reachable) {
+          reachable = true
+          break
+        }
         await new Promise((r) => setTimeout(r, pollInterval))
+      }
+
+      if (!reachable) {
+        throw new Error('Server did not become reachable. Please try again.')
       }
 
       // Now connect — the server is ready
       installStatus = ''
-      installPhase = 'idle'
       localInstalled = true
       await connect('local')
+      installPhase = 'idle'
     } catch (e: any) {
       installPhase = 'error'
       installError = e?.message || $i18n.t('error.somethingWentWrong')
@@ -292,7 +300,11 @@
         openConnections = new Map(openConnections)
         connectedUrl = data.data.url
         activeConnectionId = connId
-        view = 'connected'
+        // Don't switch to connected view during active install — the install
+        // flow handles its own transition after confirming reachability.
+        if (installPhase !== 'working') {
+          view = 'connected'
+        }
       }
       if (data.type === 'status:open-terminal') {
         openTerminalStatus = data.data

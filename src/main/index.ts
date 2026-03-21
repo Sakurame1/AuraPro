@@ -314,6 +314,22 @@ const connectTo = async (connection: Connection) => {
       if (!started) return null
     }
     url = SERVER_URL || connection.url
+
+    // Wait for the server to actually be reachable before opening the view.
+    // startServerHandler returns as soon as the process spawns, but the HTTP
+    // endpoint might not be ready yet (especially on first launch).
+    if (!SERVER_REACHABLE) {
+      const maxWait = 120_000
+      const poll = 2_000
+      const t0 = Date.now()
+      while (!SERVER_REACHABLE && Date.now() - t0 < maxWait) {
+        await new Promise((r) => setTimeout(r, poll))
+      }
+      if (!SERVER_REACHABLE) {
+        log.warn('connectTo: server did not become reachable within timeout')
+        return null
+      }
+    }
   }
 
   // Normalize URL
@@ -539,12 +555,12 @@ const resetAppHandler = async () => {
     } catch (e) {
       log.warn('Failed to stop Open Terminal during reset:', e)
     }
-    // Stop llama.cpp if running
+    // Stop and uninstall llama.cpp if running
     try {
-      await stopLlamaCpp()
+      await uninstallLlamaCpp()
       sendToRenderer('status:llamacpp', null)
     } catch (e) {
-      log.warn('Failed to stop llama.cpp during reset:', e)
+      log.warn('Failed to uninstall llama.cpp during reset:', e)
     }
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()

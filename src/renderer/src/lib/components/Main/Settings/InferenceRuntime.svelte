@@ -472,8 +472,8 @@
     <input
       type="number"
       class="bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60 w-20 text-right"
-      value={$config?.llamaCpp?.port ?? 8081}
-      onchange={(e) => updateConfig('port', parseInt((e.target as HTMLInputElement).value) || 8081)}
+      value={$config?.llamaCpp?.port ?? 18881}
+      onchange={(e) => updateConfig('port', parseInt((e.target as HTMLInputElement).value) || 18881)}
     />
   </div>
 
