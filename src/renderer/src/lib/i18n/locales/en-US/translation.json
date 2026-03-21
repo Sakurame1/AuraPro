@@ -37,6 +37,7 @@
   "common.disabled": "Disabled",
   "common.default": "default",
   "common.auto": "Auto",
+  "common.advanced": "Advanced",
   "common.ready": "Ready",
   "common.version": "Version",
   "common.running": "Running",
