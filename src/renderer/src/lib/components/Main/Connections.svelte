@@ -84,16 +84,17 @@
         if (!pythonOk) throw new Error('Failed to install Python. Please try again.')
       }
 
-      // Start optional services in parallel — they don't depend on Open WebUI
+      const ok = await window.electronAPI.installPackage()
+      if (!ok) throw new Error($i18n.t('error.installFailedGeneric'))
+
+      // Start optional services after packages are installed to avoid
+      // concurrent uv installs fighting over the lockfile
       if (options?.installOpenTerminal) {
         toggleOpenTerminal()
       }
       if (options?.installLlamaCpp) {
         toggleLlamaCpp()
       }
-
-      const ok = await window.electronAPI.installPackage()
-      if (!ok) throw new Error($i18n.t('error.installFailedGeneric'))
 
       installStatus = $i18n.t('main.install.startingServer')
       await window.electronAPI.startServer()
