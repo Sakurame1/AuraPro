@@ -27,7 +27,7 @@
   let url = $state('')
   let connecting = $state(false)
   let error = $state('')
-  let view = $state('welcome') // welcome | add | install | connected
+  let view = $state('welcome') // welcome | install | connected
   let autoInstall = $state(false)
   let installPhase = $state('idle') // idle | working | error
   let installError = $state('')
@@ -40,6 +40,7 @@
   let connectingId = $state('')
   let openConnections: Map<string, string> = $state(new Map())
   let localInstalled = $state(false)
+  let showAddConnectionModal = $state(false)
 
   // Active log panel
   let activeLog = $state<'server' | 'open-terminal' | 'llama-server' | null>(null)
@@ -146,6 +147,12 @@
     let u = url.trim()
     if (!u.startsWith('http')) u = 'https://' + u
     error = ''
+    try {
+      new URL(u)
+    } catch {
+      error = $i18n.t('setup.invalidUrl')
+      return
+    }
     connecting = true
     try {
       const valid = await window.electronAPI.validateUrl(u)
@@ -164,6 +171,7 @@
       config.set(await window.electronAPI.getConfig())
       url = ''
       error = ''
+      showAddConnectionModal = false
       view = 'welcome'
     } catch {
       error = $i18n.t('setup.connectionFailed')
@@ -408,7 +416,7 @@
         bind:settingsOpen
         onConnect={connect}
         onDisconnect={disconnect}
-        onAddView={() => { disconnect(); view = 'add' }}
+        onAddView={() => { showAddConnectionModal = true }}
         {onOpenSettings}
         onRename={async (id, name) => {
           await window.electronAPI.updateConnection(id, { name })
@@ -435,6 +443,7 @@
       bind:url
       bind:connecting
       bind:error
+      bind:showAddConnectionModal
       bind:autoInstall
       onStartInstall={startInstall}
       onAddConnection={addConnection}
