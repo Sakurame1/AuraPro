@@ -33,7 +33,7 @@
         : 'h-8'}"
     >
       <div
-        class="flex items-center gap-1 {$appInfo?.platform === 'darwin'
+        class="flex items-center gap-3 {$appInfo?.platform === 'darwin'
           ? 'pl-25'
           : 'pl-3'} pr-2 shrink-0 translate-y-[0.5px]"
       >
