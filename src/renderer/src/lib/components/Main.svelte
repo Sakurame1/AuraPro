@@ -14,11 +14,18 @@
 
   onMount(async () => {
     connections.set(await window.electronAPI.getConnections())
-    config.set(await window.electronAPI.getConfig())
+    const cfg = await window.electronAPI.getConfig()
+    config.set(cfg)
+    sidebarOpen = cfg?.showSidebar ?? true
     setTimeout(() => {
       visible = true
     }, 50)
   })
+
+  const toggleSidebar = () => {
+    sidebarOpen = !sidebarOpen
+    window.electronAPI.setConfig({ showSidebar: sidebarOpen })
+  }
 </script>
 
 {#if visible}
@@ -39,7 +46,7 @@
       >
         <button
           class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] no-drag"
-          onclick={() => (sidebarOpen = !sidebarOpen)}
+          onclick={toggleSidebar}
           use:tooltip={sidebarOpen ? $i18n.t('sidebar.tooltip.closeSidebar') : $i18n.t('sidebar.tooltip.openSidebar')}
         >
           <svg

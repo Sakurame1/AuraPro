@@ -799,6 +799,7 @@ export interface AppConfig {
     extraArgs: string[]
   }
   envVars: Record<string, string>
+  showSidebar: boolean
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -823,7 +824,8 @@ const DEFAULT_CONFIG: AppConfig = {
     variant: 'cpu',
     extraArgs: []
   },
-  envVars: {}
+  envVars: {},
+  showSidebar: true
 }
 
 export const getConfig = async (): Promise<AppConfig> => {
