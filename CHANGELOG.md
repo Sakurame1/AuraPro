@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.5] - 2026-04-07
+
+### Added
+
+- **Bidirectional Theme Sync** — Theme changes in Open WebUI are now mirrored to the desktop shell and vice versa, using a symmetric `theme:update` event protocol
+- **Zero-Reload Spotlight Queries** — Spotlight prompts are injected directly into already-open webviews via event bridge instead of triggering a full page reload
+
+### Fixed
+
+- **Auto-Default Connection** — Selecting a connection now automatically sets it as the default for spotlight and startup
+- **Connection Switch Stability** — Switching between already-open connections no longer causes unnecessary URL reloads
+- **Connection Switch Race Condition** — Clicking a remote connection while the local server is still starting no longer gets overridden when the local connection finishes loading
 
 ## [0.0.3] - 2026-04-06
 

@@ -410,7 +410,10 @@ const updateTray = () => {
   const connectionItems = (CONFIG.connections || []).map((conn) => ({
     label: `${conn.id === CONFIG.defaultConnectionId ? '★ ' : ''}${conn.name}`,
     sublabel: conn.url,
-    click: () => connectTo(conn)
+    click: async () => {
+      const result = await connectTo(conn)
+      if (result) sendToRenderer('connection:open', result)
+    }
   }))
 
   const trayMenuTemplate = [
@@ -490,7 +493,6 @@ const connectTo = async (connection: Connection) => {
     url = url.replace('http://0.0.0.0', 'http://localhost')
   }
 
-  sendToRenderer('connection:open', { url, connectionId: connection.id })
   return { url, connectionId: connection.id }
 }
 
@@ -981,9 +983,10 @@ if (!gotTheLock) {
         url = url.replace('http://0.0.0.0', 'http://localhost')
       }
 
-      // Navigate to the connection URL with query
-      const targetUrl = `${url}/?q=${encodeURIComponent(query)}`
-      sendToRenderer('connection:open', { url: targetUrl, connectionId: conn.id })
+      // Send query event — the renderer decides whether to open a new
+      // connection (with ?q= baked into the URL) or inject the prompt
+      // into an already-open webview via postMessage (zero navigation).
+      sendToRenderer('query', { query, connectionId: conn.id, url })
 
       // Show main window and hide spotlight
       mainWindow?.show()
@@ -1300,7 +1303,8 @@ if (!gotTheLock) {
       )
       if (defaultConn) {
         createMainWindow()
-        await connectTo(defaultConn)
+        const result = await connectTo(defaultConn)
+        if (result) sendToRenderer('connection:open', result)
       } else {
         createMainWindow()
       }

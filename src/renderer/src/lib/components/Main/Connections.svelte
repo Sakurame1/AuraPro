@@ -133,7 +133,7 @@
       // Now connect — the server is ready
       installStatus = ''
       localInstalled = true
-      await connect('local')
+      connect('local')
       installPhase = 'idle'
     } catch (e: any) {
       installPhase = 'error'
@@ -182,33 +182,61 @@
     }
   }
 
-  const connect = async (id: string) => {
+  const connect = (id: string) => {
     showingLogs = false
     // Toggle: clicking the active connection unselects it
     if (activeConnectionId === id && view === 'connected') {
+      connectingId = ''
       activeConnectionId = ''
       connectedUrl = ''
       view = 'welcome'
       return
     }
+    // Persist as default so spotlight/startup always use the last-selected connection
+    window.electronAPI.setDefaultConnection(id)
+    // Already-open connection — just switch to it
     if (openConnections.has(id)) {
+      connectingId = ''
       activeConnectionId = id
       connectedUrl = openConnections.get(id)!
       view = 'connected'
       return
     }
-    connectingId = id
-    try {
-      const result = await window.electronAPI.connectTo(id)
-      if (result?.url) {
-        openConnections.set(result.connectionId, result.url)
-        openConnections = new Map(openConnections) // trigger reactivity
-        connectedUrl = result.url
-        activeConnectionId = result.connectionId
-        view = 'connected'
-      }
-    } finally {
+
+    const conn = ($connections ?? []).find((c) => c.id === id)
+    if (!conn) return
+
+    activeConnectionId = id
+
+    if (conn.type === 'local') {
+      // Local needs server start — use IPC
+      connectingId = id
+      view = 'welcome'
+      window.electronAPI.connectTo(id).then((result: any) => {
+        if (!result?.url) {
+          if (connectingId === id) connectingId = ''
+          return
+        }
+        if (!openConnections.has(result.connectionId)) {
+          openConnections.set(result.connectionId, result.url)
+          openConnections = new Map(openConnections)
+        }
+        if (connectingId === id) {
+          connectedUrl = result.url
+          activeConnectionId = result.connectionId
+          connectingId = ''
+          if (installPhase !== 'working') {
+            view = 'connected'
+          }
+        }
+      })
+    } else {
+      // Remote — open immediately, no IPC needed
       connectingId = ''
+      openConnections.set(id, conn.url)
+      openConnections = new Map(openConnections)
+      connectedUrl = conn.url
+      view = 'connected'
     }
   }
 
@@ -307,36 +335,72 @@
       if (data.type === 'connection:open' && data.data?.url) {
         const connId = data.data.connectionId ?? ''
         const incomingUrl = data.data.url
-        const alreadyOpen = openConnections.has(connId)
 
-        openConnections.set(connId, incomingUrl)
-        openConnections = new Map(openConnections)
-        connectedUrl = incomingUrl
-        activeConnectionId = connId
-
-        // If the webview for this connection already exists in the DOM,
-        // updating the map value won't cause it to re-navigate (Electron
-        // webview `src` changes on an existing element are ignored). We
-        // need to explicitly call loadURL so that e.g. the spotlight ?q=
-        // parameter actually reaches the Open WebUI instance.
-        if (alreadyOpen) {
-          requestAnimationFrame(() => {
-            const container = document.querySelector('.content-webview-container')
-            if (!container) return
-            const wv = container.querySelector(
-              `webview[partition="persist:connection-${connId}"]`
-            ) as any
-            if (wv?.loadURL) {
-              wv.loadURL(incomingUrl)
-            }
-          })
+        if (!openConnections.has(connId)) {
+          openConnections.set(connId, incomingUrl)
+          openConnections = new Map(openConnections)
         }
 
-        // Don't switch to connected view during active install — the install
-        // flow handles its own transition after confirming reachability.
+        // Only auto-switch if no connection is currently active.
+        // This handles startup auto-connect and tray clicks when on the welcome screen,
+        // without overriding a connection the user is already viewing.
+        if (view !== 'connected') {
+          connectedUrl = openConnections.get(connId) ?? incomingUrl
+          activeConnectionId = connId
+
+          if (installPhase !== 'working') {
+            view = 'connected'
+          }
+        }
+      }
+      // Desktop query — for new connections, bake ?q= into the initial URL.
+      // For already-open connections, the event flows through to the webview
+      // where Open WebUI's Chat.svelte handles it via electronAPI.onEvent.
+      // Fall back to loadURL for old Open WebUI versions without the handler.
+      if (data.type === 'query' && data.data?.query) {
+        const connId = data.data.connectionId ?? ''
+        const query = data.data.query
+        const baseUrl = data.data.url ?? ''
+
+        if (!openConnections.has(connId)) {
+          const initialUrl = `${baseUrl}/?q=${encodeURIComponent(query)}`
+          openConnections.set(connId, initialUrl)
+          openConnections = new Map(openConnections)
+          connectedUrl = initialUrl
+          activeConnectionId = connId
+          if (installPhase !== 'working') {
+            view = 'connected'
+          }
+          return
+        }
+
+        activeConnectionId = connId
+        connectedUrl = openConnections.get(connId)!
         if (installPhase !== 'working') {
           view = 'connected'
         }
+
+        // Check if Open WebUI supports the query event (version >= 0.6.6).
+        // If not, fall back to full URL navigation.
+        requestAnimationFrame(async () => {
+          const container = document.querySelector('.content-webview-container')
+          if (!container) return
+          const wv = container.querySelector(
+            `webview[partition="persist:connection-${connId}"]`
+          ) as any
+          if (!wv) return
+
+          try {
+            const ver = await wv.executeJavaScript('window.WEBUI_VERSION || ""')
+            if (!ver) {
+              // Old Open WebUI — fall back to ?q= navigation
+              wv.loadURL(`${baseUrl}/?q=${encodeURIComponent(query)}`)
+            }
+            // New Open WebUI — event already forwarded by Content.svelte
+          } catch {
+            wv.loadURL(`${baseUrl}/?q=${encodeURIComponent(query)}`)
+          }
+        })
       }
       if (data.type === 'status:open-terminal') {
         openTerminalStatus = data.data

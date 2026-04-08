@@ -45,6 +45,18 @@
     applyThemeClass(newTheme)
     await window.electronAPI.setConfig({ theme: newTheme })
     config.set(await window.electronAPI.getConfig())
+
+    // Push theme to all active Open WebUI webviews
+    const container = document.querySelector('.content-webview-container')
+    if (container) {
+      container.querySelectorAll('webview').forEach((wv: any) => {
+        try {
+          wv.send('desktop:event', { type: 'theme:update', data: { theme: newTheme } })
+        } catch (_) {
+          // webview may not be ready yet
+        }
+      })
+    }
   }
 
   const setDefault = async (id: string) => {
