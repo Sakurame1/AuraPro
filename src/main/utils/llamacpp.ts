@@ -10,6 +10,7 @@ import log from 'electron-log'
 
 import {
   getConfig,
+  setConfig,
   getUserDataPath,
   portInUse,
   downloadFileWithProgress
