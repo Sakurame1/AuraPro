@@ -63,12 +63,20 @@
   let llamaCppInfo = $state<{ url?: string; pid?: number } | null>(null)
   let llamaCppSetupStatus = $state('')
 
-  const startInstall = async (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean }) => {
+  const startInstall = async (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean; installDir?: string }) => {
     installPhase = 'working'
     installError = ''
     installStatus = ''
     toastVisible = false
     try {
+      // Save custom install directory before anything else
+      if (options?.installDir) {
+        const currentDir = await window.electronAPI.getInstallDir()
+        if (options.installDir !== currentDir) {
+          await window.electronAPI.setConfig({ installDir: options.installDir })
+        }
+      }
+
       // Check disk space before installing (minimum 5 GB)
       const MINIMUM_DISK_BYTES = 5 * 1024 * 1024 * 1024
       const disk = await window.electronAPI.getDiskSpace()

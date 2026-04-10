@@ -11,7 +11,7 @@ import log from 'electron-log'
 import {
   getConfig,
   setConfig,
-  getUserDataPath,
+  getInstallDir,
   portInUse,
   downloadFileWithProgress
 } from './index'
@@ -36,7 +36,7 @@ export const getLlamaCppInfo = () => {
   // Lazily discover a cached binary on cold boot so the UI never falsely
   // reports "not installed" when the files are actually on disk.
   if (!binaryPath) {
-    const cacheBase = path.join(getUserDataPath(), 'llama.cpp')
+    const cacheBase = path.join(getInstallDir(), 'llama.cpp')
     try {
       if (fs.existsSync(cacheBase)) {
         const dirs = fs.readdirSync(cacheBase, { withFileTypes: true })
@@ -58,7 +58,7 @@ export const getLlamaCppInfo = () => {
   // directly under the llama.cpp cache dir, e.g. …/llama.cpp/<tag>/bin/llama-server
   let version: string | null = null
   if (binaryPath) {
-    const cacheBase = path.join(getUserDataPath(), 'llama.cpp')
+    const cacheBase = path.join(getInstallDir(), 'llama.cpp')
     const relative = path.relative(cacheBase, binaryPath)
     const tag = relative.split(path.sep)[0]
     if (tag) version = tag
@@ -215,7 +215,7 @@ export const setupLlamaCpp = async (
   const version = llamaConfig.version || 'latest'
   const variant = resolveVariant(llamaConfig.variant)
 
-  const cacheBase = path.join(getUserDataPath(), 'llama.cpp')
+  const cacheBase = path.join(getInstallDir(), 'llama.cpp')
   if (!fs.existsSync(cacheBase)) {
     fs.mkdirSync(cacheBase, { recursive: true })
   }
@@ -431,7 +431,7 @@ export const updateLlamaCpp = async (
   // 3. Clear old cache directory (safe — we verified network above)
   const currentInfo = getLlamaCppInfo()
   if (currentInfo.version) {
-    const cacheDir = path.join(getUserDataPath(), 'llama.cpp', currentInfo.version)
+    const cacheDir = path.join(getInstallDir(), 'llama.cpp', currentInfo.version)
     if (fs.existsSync(cacheDir)) {
       onStatus?.('Removing old version…')
       try {
@@ -603,7 +603,7 @@ export const validateLlamaCppProcess = (): boolean => {
 export const uninstallLlamaCpp = async (): Promise<void> => {
   await stopLlamaCpp()
 
-  const cacheBase = path.join(getUserDataPath(), 'llama.cpp')
+  const cacheBase = path.join(getInstallDir(), 'llama.cpp')
   if (fs.existsSync(cacheBase)) {
     fs.rmSync(cacheBase, { recursive: true, force: true })
     log.info('Removed llama.cpp directory:', cacheBase)

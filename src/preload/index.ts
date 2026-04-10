@@ -60,6 +60,7 @@ const api = {
   getVersion: () => ipcRenderer.invoke('get:version'),
   resetApp: () => ipcRenderer.invoke('app:reset'),
   getDefaultDataPath: () => ipcRenderer.invoke('app:defaultDataPath'),
+  getInstallDir: () => ipcRenderer.invoke('app:installDir'),
   getContentPreloadPath: () => ipcRenderer.invoke('app:contentPreloadPath'),
   getDiskSpace: () => ipcRenderer.invoke('system:diskSpace'),
   getLaunchAtLogin: () => ipcRenderer.invoke('app:launchAtLogin:get'),

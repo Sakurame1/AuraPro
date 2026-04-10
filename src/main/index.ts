@@ -28,6 +28,7 @@ import {
   clearAllServerLogs,
   getConfig,
   getUserDataPath,
+  getInstallDir,
   getServerLog,
   getServerPIDs,
   getServerPty,
@@ -768,6 +769,10 @@ if (!gotTheLock) {
 
     ipcMain.handle('app:defaultDataPath', () => {
       return join(getUserDataPath(), 'data')
+    })
+
+    ipcMain.handle('app:installDir', () => {
+      return getInstallDir()
     })
 
     ipcMain.handle('system:diskSpace', async () => {
