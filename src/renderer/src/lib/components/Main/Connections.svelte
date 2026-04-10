@@ -341,15 +341,16 @@
       : Array.from(container.querySelectorAll('webview'))
 
     for (const wv of webviews) {
-      const deliver = () => {
-        try { wv.send('desktop:event', event) } catch (_) {}
-      }
-
-      if (!wv.isLoading?.()) {
-        deliver()
-      } else {
-        const onStop = () => { wv.removeEventListener('did-stop-loading', onStop); deliver() }
-        wv.addEventListener('did-stop-loading', onStop)
+      try {
+        // Attempt to send — throws if webview hasn't fired dom-ready yet
+        wv.send('desktop:event', event)
+      } catch {
+        // Webview not ready — queue delivery until dom-ready
+        const onReady = () => {
+          wv.removeEventListener('dom-ready', onReady)
+          try { wv.send('desktop:event', event) } catch (_) {}
+        }
+        wv.addEventListener('dom-ready', onReady)
       }
     }
   }
@@ -376,9 +377,10 @@
       }
 
       // ── Spotlight / desktop query ─────────────────────
-      if (data.type === 'query' && data.data?.query) {
+      if (data.type === 'query' && (data.data?.query || data.data?.files?.length)) {
         const connId = data.data.connectionId ?? ''
         const query = data.data.query
+        const files = data.data.files
         const baseUrl = data.data.url ?? ''
 
         if (!openConnections.has(connId)) {
@@ -393,7 +395,7 @@
 
         // Targeted delivery — wait a frame for the webview DOM to exist
         requestAnimationFrame(() => {
-          sendToWebview({ type: 'query', data: { query } }, connId)
+          sendToWebview({ type: 'query', data: { query, files } }, connId)
         })
         return
       }
@@ -408,6 +410,14 @@
 
       // ── Everything else → broadcast to all webviews ───
       sendToWebview(data)
+    })
+
+    // Auto-connect to the default connection on startup so the webview
+    // is pre-loaded and ready for spotlight queries.
+    window.electronAPI.getConfig().then((cfg: any) => {
+      if (cfg?.defaultConnectionId && !activeConnectionId) {
+        connect(cfg.defaultConnectionId)
+      }
     })
 
     // Check current Open Terminal state on mount
