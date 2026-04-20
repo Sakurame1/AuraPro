@@ -202,50 +202,50 @@
     </button>
   </div>
 
-  <!-- Downloaded models + active download -->
+  <!-- Downloaded models + active downloads -->
   <div class="py-4">
     <div class="text-[12px] opacity-50 mb-2">{$i18n.t('settings.models.downloadedModels')}</div>
 
     {#if models.length > 0 || hasActiveDownloads}
-      <div class="flex flex-col gap-1.5">
+      <div class="flex flex-col">
 
-        <!-- Active downloads in progress -->
+        <!-- Active downloads -->
         {#each [...activeDownloads.values()] as dl (dlKey(dl.repo, dl.filename))}
-          <div class="px-2.5 py-2 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl">
-            <div class="flex items-center justify-between gap-2 mb-1.5">
-              <div class="min-w-0 flex-1">
-                <div class="text-[12px] opacity-60 truncate font-mono">{dl.filename}</div>
-                <div class="text-[10px] opacity-25 truncate">{dl.repo} · {$i18n.t('common.downloading')}</div>
+          <div class="flex items-center gap-3 py-2 group">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[12px] opacity-60 truncate font-mono">{dl.filename}</span>
+                <span class="text-[10px] opacity-30 font-mono shrink-0">{dl.percent.toFixed(1)}%</span>
               </div>
-              <button
-                class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
-                onclick={() => cancelDownload(dl.repo, dl.filename)}
-                title={$i18n.t('settings.models.cancelDownload')}
-              >
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div class="mt-1.5 w-full h-[3px] bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-emerald-400/70 rounded-full transition-[width] duration-300"
+                  style="width: {dl.percent}%"
+                ></div>
+              </div>
+              <div class="text-[10px] opacity-20 mt-1 truncate">{dl.repo}</div>
             </div>
-            <div class="w-full h-1 bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
-              <div
-                class="h-full bg-emerald-400/80 rounded-full"
-                style="width: {dl.percent}%"
-              ></div>
-            </div>
-            <div class="text-[10px] opacity-25 mt-1 text-right font-mono">{dl.percent.toFixed(1)}%</div>
+            <button
+              class="opacity-0 group-hover:opacity-40 hover:!opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
+              onclick={() => cancelDownload(dl.repo, dl.filename)}
+              title={$i18n.t('settings.models.cancelDownload')}
+            >
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         {/each}
 
         <!-- Completed downloads -->
         {#each models as model}
-          <div class="flex items-center justify-between gap-2 px-2.5 py-2 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl">
+          <div class="flex items-center gap-3 py-2 group">
             <div class="min-w-0 flex-1">
               <div class="text-[12px] opacity-60 truncate font-mono">{model.filename}</div>
-              <div class="text-[10px] opacity-25 truncate">{model.repo} · {formatSize(model.size)}</div>
+              <div class="text-[10px] opacity-20 truncate mt-0.5">{model.repo} · {formatSize(model.size)}</div>
             </div>
             <button
-              class="opacity-20 hover:opacity-60 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0 {deleting === `${model.repo}/${model.filename}` ? 'pointer-events-none' : ''}"
+              class="opacity-0 group-hover:opacity-30 hover:!opacity-60 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0 {deleting === `${model.repo}/${model.filename}` ? '!opacity-30 pointer-events-none' : ''}"
               onclick={() => removeModel(model.repo, model.filename)}
               title={$i18n.t('settings.models.deleteModel')}
             >
@@ -261,7 +261,7 @@
         {/each}
       </div>
     {:else}
-      <div class="text-[11px] opacity-40 py-3">{$i18n.t('settings.models.noModels')}</div>
+      <div class="text-[11px] opacity-20 py-3">{$i18n.t('settings.models.noModels')}</div>
     {/if}
   </div>
 
@@ -270,13 +270,13 @@
     <div class="text-[12px] opacity-50 mb-2">
       {#if selectedRepo}
         <button
-          class="opacity-50 hover:opacity-80 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 text-[12px] flex items-center gap-1"
+          class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 text-[12px] flex items-center gap-1 font-mono truncate"
           onclick={backToSearch}
         >
-          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg class="w-3 h-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-          {selectedRepo}
+          <span class="truncate">{selectedRepo}</span>
         </button>
       {:else}
         {$i18n.t('settings.models.downloadFromHF')}
@@ -293,25 +293,41 @@
       {:else if repoFiles.length === 0}
         <div class="text-[11px] opacity-20 text-center py-3">{$i18n.t('settings.models.noGgufFiles')}</div>
       {:else}
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col">
           {#each repoFiles as file}
             {@const downloaded = isDownloaded(selectedRepo, file.filename)}
             {@const dlActive = isDownloading(selectedRepo, file.filename)}
-            <div class="flex items-center justify-between gap-2 px-2.5 py-2 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl">
+            <div class="flex items-center gap-3 py-2 group">
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] opacity-50 truncate font-mono">{file.filename}</div>
-                <div class="text-[10px] opacity-25">{formatSize(file.size)}</div>
+                <div class="text-[10px] opacity-20 mt-0.5">{formatSize(file.size)}</div>
+                {#if dlActive}
+                  <div class="mt-1.5 w-full h-[3px] bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      class="h-full bg-emerald-400/70 rounded-full transition-[width] duration-300"
+                      style="width: {getDownloadPercent(selectedRepo, file.filename)}%"
+                    ></div>
+                  </div>
+                {/if}
               </div>
               {#if downloaded}
-                <span class="text-[10px] opacity-30 shrink-0 px-2">{$i18n.t('settings.models.downloaded')}</span>
+                <span class="text-[10px] opacity-25 shrink-0">{$i18n.t('settings.models.downloaded')}</span>
               {:else if dlActive}
                 <div class="flex items-center gap-1.5 shrink-0">
-                  <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
                   <span class="text-[10px] opacity-40 font-mono">{getDownloadPercent(selectedRepo, file.filename).toFixed(0)}%</span>
+                  <button
+                    class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0.5"
+                    onclick={() => cancelDownload(selectedRepo, file.filename)}
+                    title={$i18n.t('settings.models.cancelDownload')}
+                  >
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               {:else}
                 <button
-                  class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
+                  class="opacity-0 group-hover:opacity-40 hover:!opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
                   onclick={() => startDownload(selectedRepo, file.filename, file.size)}
                   title={$i18n.t('common.download')}
                 >
@@ -346,10 +362,10 @@
       {#if searchError}
         <div class="text-[11px] text-red-400/70 text-center py-2">{searchError}</div>
       {:else if searchResults.length > 0}
-        <div class="flex flex-col gap-1 max-h-[300px] overflow-y-auto">
+        <div class="flex flex-col max-h-[300px] overflow-y-auto">
           {#each searchResults as repo}
             <button
-              class="flex items-center justify-between gap-2 px-2.5 py-2 bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] rounded-xl transition border-none text-left w-full text-[#1d1d1f] dark:text-[#fafafa]"
+              class="flex items-center justify-between gap-2 py-2 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-lg transition border-none text-left w-full text-[#1d1d1f] dark:text-[#fafafa] bg-transparent px-1"
               onclick={() => selectRepo(repo.id)}
             >
               <div class="min-w-0 flex-1">
@@ -369,7 +385,7 @@
                   </span>
                 </div>
               </div>
-              <svg class="w-3 h-3 opacity-20 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg class="w-3 h-3 opacity-15 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </button>
