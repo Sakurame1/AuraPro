@@ -41,8 +41,10 @@
   let repoFiles = $state<HfFileInfo[]>([])
   let loadingFiles = $state(false)
 
-  // Download state — track active download in the "Downloaded" section
-  let activeDownload = $state<{ repo: string; filename: string; percent: number } | null>(null)
+  // Download state — track active downloads in the "Downloaded" section
+  let activeDownloads = $state<Map<string, { repo: string; filename: string; percent: number }>>(new Map())
+
+  const dlKey = (repo: string, filename: string): string => `${repo}/${filename}`
 
   onMount(async () => {
     models = await window.electronAPI.listHfModels()
@@ -52,15 +54,22 @@
     window.electronAPI.onData((data: any) => {
       if (data.type === 'status:huggingface-download') {
         const d = data.data
+        const key = dlKey(d.repo, d.filename)
         if (d?.status === 'downloading') {
-          activeDownload = { repo: d.repo, filename: d.filename, percent: d.percent ?? 0 }
+          const updated = new Map(activeDownloads)
+          updated.set(key, { repo: d.repo, filename: d.filename, percent: d.percent ?? 0 })
+          activeDownloads = updated
         }
         if (d?.status === 'done') {
-          activeDownload = null
+          const updated = new Map(activeDownloads)
+          updated.delete(key)
+          activeDownloads = updated
           window.electronAPI.listHfModels().then((m: HfModel[]) => { models = m })
         }
         if (d?.status === 'failed') {
-          activeDownload = null
+          const updated = new Map(activeDownloads)
+          updated.delete(key)
+          activeDownloads = updated
         }
       }
     })
@@ -109,22 +118,29 @@
   }
 
   const startDownload = async (repo: string, filename: string, size?: number) => {
-    activeDownload = { repo, filename, percent: 0 }
+    const key = dlKey(repo, filename)
+    const updated = new Map(activeDownloads)
+    updated.set(key, { repo, filename, percent: 0 })
+    activeDownloads = updated
     try {
       await window.electronAPI.downloadHfModel(repo, filename, undefined, size)
     } catch (e) {
       console.error('Failed to download model:', e)
-      activeDownload = null
+      const cleaned = new Map(activeDownloads)
+      cleaned.delete(key)
+      activeDownloads = cleaned
     }
   }
 
-  const cancelDownload = async () => {
+  const cancelDownload = async (repo: string, filename: string) => {
     try {
-      await window.electronAPI.cancelHfDownload()
+      await window.electronAPI.cancelHfDownload(repo, filename)
     } catch (e) {
       console.error('Failed to cancel download:', e)
     }
-    activeDownload = null
+    const updated = new Map(activeDownloads)
+    updated.delete(dlKey(repo, filename))
+    activeDownloads = updated
   }
 
   const removeModel = async (repo: string, filename: string) => {
@@ -143,8 +159,14 @@
   }
 
   const isDownloading = (repo: string, filename: string): boolean => {
-    return activeDownload?.repo === repo && activeDownload?.filename === filename
+    return activeDownloads.has(dlKey(repo, filename))
   }
+
+  const getDownloadPercent = (repo: string, filename: string): number => {
+    return activeDownloads.get(dlKey(repo, filename))?.percent ?? 0
+  }
+
+  const hasActiveDownloads = $derived(activeDownloads.size > 0)
 
   const formatSize = (bytes: number): string => {
     if (!bytes) return ''
@@ -184,20 +206,20 @@
   <div class="py-4">
     <div class="text-[12px] opacity-50 mb-2">{$i18n.t('settings.models.downloadedModels')}</div>
 
-    {#if models.length > 0 || activeDownload}
+    {#if models.length > 0 || hasActiveDownloads}
       <div class="flex flex-col gap-1.5">
 
-        <!-- Active download in progress -->
-        {#if activeDownload}
+        <!-- Active downloads in progress -->
+        {#each [...activeDownloads.values()] as dl (dlKey(dl.repo, dl.filename))}
           <div class="px-2.5 py-2 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl">
             <div class="flex items-center justify-between gap-2 mb-1.5">
               <div class="min-w-0 flex-1">
-                <div class="text-[12px] opacity-60 truncate font-mono">{activeDownload.filename}</div>
-                <div class="text-[10px] opacity-25 truncate">{activeDownload.repo} · {$i18n.t('common.downloading')}</div>
+                <div class="text-[12px] opacity-60 truncate font-mono">{dl.filename}</div>
+                <div class="text-[10px] opacity-25 truncate">{dl.repo} · {$i18n.t('common.downloading')}</div>
               </div>
               <button
                 class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
-                onclick={cancelDownload}
+                onclick={() => cancelDownload(dl.repo, dl.filename)}
                 title={$i18n.t('settings.models.cancelDownload')}
               >
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -208,12 +230,12 @@
             <div class="w-full h-1 bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
               <div
                 class="h-full bg-emerald-400/80 rounded-full"
-                style="width: {activeDownload.percent}%"
+                style="width: {dl.percent}%"
               ></div>
             </div>
-            <div class="text-[10px] opacity-25 mt-1 text-right font-mono">{activeDownload.percent.toFixed(1)}%</div>
+            <div class="text-[10px] opacity-25 mt-1 text-right font-mono">{dl.percent.toFixed(1)}%</div>
           </div>
-        {/if}
+        {/each}
 
         <!-- Completed downloads -->
         {#each models as model}
@@ -254,7 +276,7 @@
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-          {$i18n.t('common.back')}
+          {selectedRepo}
         </button>
       {:else}
         {$i18n.t('settings.models.downloadFromHF')}
@@ -263,10 +285,6 @@
 
     {#if selectedRepo}
       <!-- Repo file browser -->
-      <div class="mb-2">
-        <div class="text-[12px] opacity-60 font-mono truncate mb-2">{selectedRepo}</div>
-      </div>
-
       {#if loadingFiles}
         <div class="flex items-center gap-2 py-3 justify-center">
           <div class="w-3 h-3 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
@@ -289,13 +307,12 @@
               {:else if dlActive}
                 <div class="flex items-center gap-1.5 shrink-0">
                   <div class="w-2.5 h-2.5 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
-                  <span class="text-[10px] opacity-40 font-mono">{activeDownload?.percent?.toFixed(0) ?? 0}%</span>
+                  <span class="text-[10px] opacity-40 font-mono">{getDownloadPercent(selectedRepo, file.filename).toFixed(0)}%</span>
                 </div>
               {:else}
                 <button
-                  class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0 {activeDownload ? 'pointer-events-none opacity-10' : ''}"
+                  class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
                   onclick={() => startDownload(selectedRepo, file.filename, file.size)}
-                  disabled={!!activeDownload}
                   title={$i18n.t('common.download')}
                 >
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

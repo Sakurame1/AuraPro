@@ -1647,8 +1647,8 @@ if (!gotTheLock) {
     ipcMain.handle('huggingface:models:delete', (_event, repo: string, filename: string) => {
       return deleteModel(repo, filename)
     })
-    ipcMain.handle('huggingface:models:cancel', () => {
-      cancelDownload()
+    ipcMain.handle('huggingface:models:cancel', (_event, repo?: string, filename?: string) => {
+      cancelDownload(repo, filename)
       return true
     })
     ipcMain.handle('huggingface:search', async (_event, query: string, token?: string) => {
