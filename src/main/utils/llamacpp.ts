@@ -87,25 +87,42 @@ const detectBestVariant = (): string => {
   if (platform === 'darwin') return 'cpu'
 
   // Check for NVIDIA GPU (CUDA)
-  try {
-    execFileSync('nvidia-smi', ['--query-gpu=name', '--format=csv,noheader'], {
-      timeout: 5000,
-      stdio: 'pipe'
-    })
-    // NVIDIA GPU detected
-    if (platform === 'win32') return 'cuda-13.1'
-    // Linux: no CUDA asset currently available, fall through to other checks
-  } catch {
-    // nvidia-smi not available or no NVIDIA GPU
+  if (platform === 'win32') {
+    const nvidiaSmiPaths = [
+      'nvidia-smi',
+      path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'nvidia-smi.exe'),
+      path.join(process.env.ProgramFiles || 'C:\\Program Files', 'NVIDIA Corporation', 'NVSMI', 'nvidia-smi.exe')
+    ]
+
+    for (const smiPath of nvidiaSmiPaths) {
+      try {
+        execFileSync(smiPath, ['--query-gpu=name', '--format=csv,noheader'], {
+          timeout: 2000,
+          stdio: 'pipe'
+        })
+        log.info(`NVIDIA GPU detected using ${smiPath}`)
+        return 'cuda-13.1'
+      } catch {
+        // Continue to next path
+      }
+    }
+  } else if (platform === 'linux') {
+    try {
+      execFileSync('nvidia-smi', ['--query-gpu=name', '--format=csv,noheader'], {
+        timeout: 2000,
+        stdio: 'pipe'
+      })
+      // Linux: no CUDA asset currently available, fall through
+    } catch {
+      // no NVIDIA
+    }
   }
 
-  // Check for Vulkan support
+  // Check for Vulkan support (default for other GPUs on Windows)
   try {
-    if (platform === 'win32') {
-      execFileSync('vulkaninfo', ['--summary'], { timeout: 5000, stdio: 'pipe' })
-    } else {
-      execFileSync('vulkaninfo', ['--summary'], { timeout: 5000, stdio: 'pipe' })
-    }
+    const vulkanCmd = platform === 'win32' ? 'vulkaninfo' : 'vulkaninfo'
+    execFileSync(vulkanCmd, ['--summary'], { timeout: 2000, stdio: 'pipe' })
+    log.info('Vulkan support detected')
     return 'vulkan'
   } catch {
     // Vulkan not available
@@ -122,6 +139,7 @@ const detectBestVariant = (): string => {
     }
   }
 
+  log.info('No discrete GPU detected, falling back to CPU')
   return 'cpu'
 }
 

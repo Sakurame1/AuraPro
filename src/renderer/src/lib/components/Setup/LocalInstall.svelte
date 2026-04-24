@@ -8,7 +8,7 @@
 
   let { onBack, onComplete, autoStart = false } = $props()
 
-  let phase = $state(autoStart ? 'working' : 'ready') // ready | working | done | error
+  let phase = $state(autoStart ? 'working' : 'ready') // ready | core_installing | model_selection | model_downloading | done | error
   let errorMsg = $state('')
   let installDir = $state('')
   let defaultInstallDir = $state('')
@@ -45,13 +45,13 @@
       }
     })
 
-    if (autoStart) install()
+    if (autoStart) startCoreInstall()
   })
 
-  const install = async () => {
-    phase = 'working'
+  const startCoreInstall = async () => {
+    phase = 'core_installing'
     try {
-      // Save custom install directory before installing
+      // Save custom install directory
       if (installDir && installDir !== defaultInstallDir) {
         await window.electronAPI.setConfig({ installDir })
       }
@@ -72,29 +72,34 @@
       connections.set(await window.electronAPI.getConnections())
       config.set(await window.electronAPI.getConfig())
 
-      phase = 'downloading_model'
-      
-      try {
-        await window.electronAPI.downloadHfModel(
-          selectedModel.hfRepo, 
-          selectedModel.filename, 
-          undefined, 
-          selectedModel.sizeBytes, 
-          selectedModel.name,
-          'AuraPro'
-        )
-      } catch (e) {
-        console.error('Model download failed, but continuing setup', e)
-      }
+      phase = 'model_selection'
+    } catch (e) {
+      phase = 'error'
+      errorMsg = e?.message || $i18n.t('setup.install.somethingWentWrong')
+    }
+  }
 
+  const startModelDownload = async () => {
+    phase = 'model_downloading'
+    try {
+      await window.electronAPI.downloadHfModel(
+        selectedModel.hfRepo, 
+        selectedModel.filename, 
+        undefined, 
+        selectedModel.sizeBytes, 
+        selectedModel.name,
+        'AuraPro'
+      )
+      
       phase = 'done'
       setTimeout(async () => {
         await window.electronAPI.connectTo('local')
         onComplete()
-      }, 800)
+      }, 1000)
     } catch (e) {
+      console.error('Model download failed', e)
       phase = 'error'
-      errorMsg = e?.message || $i18n.t('setup.install.somethingWentWrong')
+      errorMsg = `Model download failed: ${e.message}`
     }
   }
 
@@ -110,14 +115,14 @@
   <button
     class="self-start text-[12px] opacity-40 hover:opacity-70 transition mb-6 bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] disabled:opacity-20"
     onclick={onBack}
-    disabled={phase === 'working'}
+    disabled={phase === 'core_installing' || phase === 'model_downloading'}
   >
     {$i18n.t('common.back')}
   </button>
 
   {#if phase === 'ready'}
     <div class="mb-1 text-sm font-normal opacity-50">{$i18n.t('app.name')}</div>
-    <h1 class="text-2xl font-light tracking-tight mb-2">{$i18n.t('setup.install.title')}</h1>
+    <h1 class="text-2xl font-light tracking-tight mb-2">Step 1: Application Setup</h1>
     <p class="text-[12px] opacity-30 mb-6 leading-relaxed">
       {$i18n.t('setup.install.description')}
     </p>
@@ -142,36 +147,21 @@
       <div class="text-[10px] opacity-20 mt-1">{$i18n.t('setup.install.installLocationDesc')}</div>
     </div>
 
-    <!-- Model Selection -->
-    <div class="mb-6">
-      <div class="text-[11px] opacity-40 mb-1.5">Model Selection (Recommended based on System RAM: {navigator.deviceMemory || '?'}GB)</div>
-      <select
-        bind:value={selectedModel}
-        class="w-full px-3 py-2 bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] opacity-80 border-none outline-none rounded-lg cursor-pointer"
-      >
-        {#each AURA_MODELS as model}
-          <option value={model}>
-            {model.name} ({model.sizeStr}) - min {model.minRam}GB RAM
-          </option>
-        {/each}
-      </select>
-    </div>
-
     <button
       class="w-fit inline-flex items-center gap-2 bg-white px-8 py-2.5 text-black text-[13px] transition hover:bg-gray-100 border-none"
-      onclick={install}
+      onclick={startCoreInstall}
     >
-      {$i18n.t('setup.install.continue')}
+      Install AuraPro Core
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
       </svg>
     </button>
 
-  {:else if phase === 'working'}
+  {:else if phase === 'core_installing'}
     <div class="flex flex-col items-center gap-5 py-10" in:fade={{ duration: 250 }}>
       <img src={logoImage} class="size-12 rounded-full dark:invert" alt="logo" />
       <div class="flex flex-col items-center gap-2 text-center">
-        <div class="text-sm opacity-60">{$i18n.t('setup.install.installing')}</div>
+        <div class="text-sm opacity-60">Installing Core Components...</div>
         {#if $serverInfo?.status}
           <div class="text-[11px] opacity-30 max-w-[220px] leading-relaxed" in:fade={{ duration: 200 }}>
             {$serverInfo.status}
@@ -184,7 +174,48 @@
       </div>
     </div>
 
-  {:else if phase === 'downloading_model'}
+  {:else if phase === 'model_selection'}
+    <div in:fade={{ duration: 250 }}>
+      <div class="mb-1 text-sm font-normal opacity-50">{$i18n.t('app.name')}</div>
+      <h1 class="text-2xl font-light tracking-tight mb-2">Step 2: Model Selection</h1>
+      <p class="text-[12px] opacity-30 mb-6 leading-relaxed">
+        Select the AI model you want to use. You can also download more later from settings.
+      </p>
+
+      <div class="mb-8">
+        <div class="text-[11px] opacity-40 mb-1.5">Recommended based on System RAM: {navigator.deviceMemory || '?'}GB</div>
+        <div class="flex flex-col gap-2">
+          {#each AURA_MODELS as model}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div 
+              class="flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all {selectedModel.name === model.name ? 'bg-white/[0.08] ring-1 ring-white/20' : 'bg-black/[0.03] dark:bg-white/[0.03] hover:bg-white/[0.05]'}"
+              onclick={() => selectedModel = model}
+            >
+              <div class="flex flex-col">
+                <span class="text-[13px] font-medium {selectedModel.name === model.name ? 'text-emerald-400' : 'opacity-80'}">{model.name}</span>
+                <span class="text-[10px] opacity-30">{model.sizeStr} · min {model.minRam}GB RAM</span>
+              </div>
+              {#if selectedModel.name === model.name}
+                <div class="size-2 rounded-full bg-emerald-400"></div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <button
+        class="w-fit inline-flex items-center gap-2 bg-white px-8 py-2.5 text-black text-[13px] transition hover:bg-gray-100 border-none"
+        onclick={startModelDownload}
+      >
+        Download & Finish Setup
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </button>
+    </div>
+
+  {:else if phase === 'model_downloading'}
     <div class="flex flex-col items-center gap-5 py-10" in:fade={{ duration: 250 }}>
       <img src={logoImage} class="size-12 rounded-full dark:invert animate-pulse" alt="logo" />
       <div class="flex flex-col items-center gap-2 text-center w-full max-w-[240px]">
@@ -204,7 +235,7 @@
   {:else if phase === 'done'}
     <div class="flex flex-col items-center gap-4 py-10" in:fade={{ duration: 250 }}>
       <img src={logoImage} class="size-12 rounded-full dark:invert" alt="logo" />
-      <div class="text-sm text-green-400 opacity-70">{$i18n.t('common.ready')}</div>
+      <div class="text-sm text-green-400 opacity-70">AuraPro is ready!</div>
     </div>
 
   {:else if phase === 'error'}

@@ -92,7 +92,10 @@ import { initUpdater, checkForUpdates, downloadUpdate, installUpdate } from './u
 import log from 'electron-log'
 log.transports.file.resolvePathFn = () => getLogFilePath('main')
 
-import icon from '../../resources/icon.png?asset'
+import iconPng from '../../resources/icon.png?asset'
+import iconIco from '../../resources/AuraPro.ico?asset'
+
+const icon = process.platform === 'win32' ? iconIco : iconPng
 
 import { existsSync, writeFileSync, unlinkSync } from 'fs'
 
@@ -284,7 +287,7 @@ function createSpotlightWindow(): BrowserWindow {
     hasShadow: false,
     show: false,
     focusable: true,
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: icon,
     webPreferences: {
       preload: join(__dirname, '../preload/spotlight-preload.js'),
       sandbox: false,
@@ -395,7 +398,7 @@ function createVoiceInputWindow(): BrowserWindow {
     hasShadow: false,
     show: false,
     focusable: true,
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: icon,
     webPreferences: {
       preload: join(__dirname, '../preload/voice-input-preload.js'),
       sandbox: false,
@@ -627,7 +630,7 @@ function createMainWindow(show = true): void {
     height: saved?.height ?? DEFAULT_WINDOW_HEIGHT,
     minWidth: MIN_WINDOW_WIDTH,
     minHeight: MIN_WINDOW_HEIGHT,
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: icon,
     show: false,
     titleBarStyle: process.platform === 'win32' ? 'default' : 'hidden',
     trafficLightPosition: { x: 10, y: 10 },
@@ -716,7 +719,7 @@ function createContentWindow(url: string, connectionId: string): BrowserWindow {
     height: DEFAULT_WINDOW_HEIGHT,
     minWidth: MIN_WINDOW_WIDTH,
     minHeight: MIN_WINDOW_HEIGHT,
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: icon,
     show: false,
     titleBarStyle: process.platform === 'win32' ? 'default' : 'hidden',
     trafficLightPosition: { x: 16, y: 16 },
@@ -1126,8 +1129,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.0.4',
-    version: '2.0.4',
+    applicationVersion: '2.0.5',
+    version: '2.0.5',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
