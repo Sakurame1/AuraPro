@@ -1,0 +1,4 @@
+provider: github
+owner: open-webui
+repo: desktop
+updaterCacheDirName: desktop-updater
