@@ -983,7 +983,7 @@ if (!gotTheLock) {
     iconPath: icon,
     applicationVersion: app.getVersion(),
     version: app.getVersion(),
-    website: 'https://openwebui.com',
+    website: 'https://github.com/Sakurame1/AuraPro/',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
 
@@ -996,7 +996,7 @@ if (!gotTheLock) {
     if (process.platform === 'darwin' && app.dock) {
       app.dock.setIcon(icon)
     }
-    electronApp.setAppUserModelId('com.openwebui.desktop')
+    electronApp.setAppUserModelId('com.aurapro.desktop')
 
     app.on('browser-window-created', (_, window) => {
       optimizer.watchWindowShortcuts(window)

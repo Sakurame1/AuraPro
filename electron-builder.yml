@@ -13,6 +13,8 @@ files:
 extraResources:
   - from: CHANGELOG.md
     to: CHANGELOG.md
+  - from: ../data
+    to: default-data
 asarUnpack:
   - resources/**
 win:
@@ -84,5 +86,5 @@ flatpak:
 npmRebuild: false
 publish:
   provider: github
-  owner: open-webui
-  repo: desktop
+  owner: Sakurame1
+  repo: AuraPro

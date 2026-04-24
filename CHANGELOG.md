@@ -5,108 +5,155 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.9] - 2026-04-20
+## [2.0.2] - 2026-04-23
 
 ### Fixed
 
-- **Open Terminal API Key Persistence.** The Open Terminal API key is now saved in config.json and reused across restarts instead of being regenerated on every startup, which was breaking existing integrations.
+- **数据库问题**：修复数据库初始化问题，确保新用户能正常使用提示词、函数脚本、词典等功能。
+- **检查更新**：修复检查更新功能的问题。
+- **新增**：新增软件内置更新历史记录。
 
-## [0.0.8] - 2026-04-11
+## [2.0.1] - 2026-04-23
 
 ### Added
 
-- **Voice Input.** System-wide push-to-talk voice transcription. Press the shortcut from any app to record audio, which is automatically transcribed and sent to your active chat.
-- **Voice Input Settings.** Configurable global hotkey and enable/disable toggle in Settings, with a default of Shift+Cmd+Space (macOS) or Shift+Ctrl+Space (Windows/Linux).
-- **Audio Feedback.** Bundled start and stop chime sounds play when recording begins and ends.
+- **检查更新**：新增检查更新和自动更新功能。
 
 ### Fixed
 
-- **Shortcut Recorder on macOS.** Shortcut inputs now use physical key codes instead of character values, fixing Alt key combinations producing unicode characters like √ instead of V.
+- **UI 问题**：修复界面显示相关的 UI 问题。
 
-## [0.0.7] - 2026-04-11
-
-### Fixed
-
-- **macOS Auto-Update.** Auto-update now works correctly on macOS. Previously, the updater tried to download a zip file with a versioned filename that did not exist in the release.
-
-## [0.0.6] - 2026-04-10
-
-### Added
-
-- **Spotlight Screenshot Capture.** Drag anywhere on the Spotlight overlay to select a region of your screen. Screenshots appear as inline thumbnails and are sent alongside your message.
-- **Multiple Screenshots.** Attach several screenshots in a single Spotlight query. Each one can be individually removed before sending.
-- **Click-to-Dismiss Spotlight.** Clicking the background outside the input bar dismisses Spotlight, in addition to pressing Escape.
-- **Screen Recording Permission Prompt (macOS).** If screen capture permission hasn't been granted, a notification guides you to the correct System Settings page.
-- **Screenshot Hint.** A "Drag anywhere to capture a screenshot" hint appears when Spotlight opens.
-- **Offline Mode for llama.cpp.** Previously downloaded llama.cpp binaries are automatically detected on startup, so local models work without an internet connection.
-- **Auto-Connect on Startup.** The app pre-connects to your default connection when launched, so Spotlight queries work immediately.
+## [2.0.0] - 2026-04-23
 
 ### Changed
 
-- **Fullscreen Spotlight Overlay.** Spotlight now opens as a fullscreen transparent overlay on your active display rather than a small floating window, enabling screenshot capture and multi-display support.
-- **Faster Remote Connections.** Switching to a remote server is now instant with no loading delay.
-- **Smarter Loading Indicator.** The loading spinner only appears when the local server is actually starting, instead of showing on every connection switch.
-- **Clearer Sidebar Selection.** Active connections are more visually distinct with bolder text and stronger highlights. Inactive connections are subtler for better contrast.
-- **Safer llama.cpp Updates.** The app verifies internet connectivity before removing the current installation, preventing accidental data loss when updating offline.
+- **项目重构**：重构项目，采用全新的软件 UI，去除大黑框，提升视觉体验。
+- **安装包优化**：大幅精简安装包体积，从约 1.5G 压缩至 0.1G。
+
+## [1.2.1] - 2026-04-22
+
+### Changed
+
+- **CUDA 精简 (Windows)**：更换 CUDA 为精简版，大幅缩短首次初始化所需时长。
+- **启动程序编码 (Windows)**：修改启动程序编码，解决部分环境下的兼容性问题。
 
 ### Fixed
 
-- **Tray Menu Connections.** Clicking a connection from the system tray menu now correctly opens it in the app.
-- **Dark Mode Context Menus.** Sidebar right-click menus no longer appear incorrectly highlighted in dark mode.
-- **Local Server Always Accessible.** The local connection in the sidebar is no longer grayed out when the server isn't running. Clicking it will start the server.
-- **Open Terminal Install Errors.** If automatic installation of Open Terminal fails, you now see a clear error message instead of a silent failure.
-- **Network Timeout Handling.** Requests for llama.cpp releases now time out after 10 seconds instead of hanging indefinitely on slow networks.
+- **显存检测 (Windows)**：修复在拥有核显的情况下，显存检测结果异常的问题。
 
-## [0.0.5] - 2026-04-07
+### Known Issues
+
+- **路径限制 (Windows)**：当安装路径包含中文时，程序无法正常运行。
+
+## [1.2.0] - 2026-04-20
 
 ### Added
 
-- **Two-Way Theme Sync.** Theme changes in Open WebUI are now mirrored to the desktop app and vice versa, so your light/dark preference stays consistent everywhere.
-- **Seamless Spotlight Queries.** Spotlight prompts now appear directly in your already-open chat without triggering a full page reload.
+- **模型下载接口 (Windows)**：额外提供一个接口供用户下载其他模型（仅 Windows 测试，macOS 后续添加）。
+- **新增可选模型**：新增 `super-high_Q5`（推荐高配模式用户尝试）和 `high-code_Q4`（主要用于写代码和中文综合用途）。
+
+### Changed
+
+- **提示词优化**：改善非人名/地名过度注释的问题。
+- **词典更新**：导入新增属灵词汇，更新词典为最新版本。
+- **默认设置 (Windows)**：优化 Windows 默认安装设置。
+- **LOGO 更新 (Windows)**：更换为圆角 LOGO。
+- **macOS 低配优化**：针对 8G 内存版 macOS 优化参数，并额外增加 `low_EQ4` 专属模型。
 
 ### Fixed
 
-- **Auto-Default Connection.** Selecting a connection now automatically saves it as your default for Spotlight and app startup.
-- **Smooth Connection Switching.** Switching between already-open connections no longer causes unnecessary page reloads.
-- **Connection Switch Race Condition.** Clicking a remote connection while the local server is still starting no longer gets overridden when the local server finishes loading.
+- **显存检测 (Windows)**：修复部分情况下显存被误检测为 4G 的问题。
+- **语言锁定**：增加强制锁定翻译语言的参数，解决翻译概率失效的问题。
 
-## [0.0.3] - 2026-04-06
-
-### Fixed
-
-- **Spotlight Focus.** Spotlight now reliably appears after interacting with the main window. Previously could fail to show on macOS.
-- **Spotlight Search Passthrough.** Searches submitted from Spotlight now correctly load in already-open connections instead of being silently ignored.
-
-## [0.0.2] - 2026-04-06
+## [1.1.0b] - 2026-04-18
 
 ### Added
 
-- **Spotlight Input Bar.** Lightweight quick-chat bar (⇧⌘I) for submitting queries without opening the full app.
-- **Spotlight Shortcut.** Dedicated configurable shortcut for Spotlight, independent from the global app shortcut.
-- **Draggable Spotlight.** Spotlight bar can be dragged to any position on screen.
-- **Persistent Spotlight Position.** Spotlight position is saved and restored across app restarts.
-- **Spotlight Settings.** Shortcut recorder in Settings → General for the Spotlight shortcut.
+- **新增模型 (macOS)**：增加 `中低配E6` 模型，专门针对 16G 内存进行优化。
 
-### Fixed
+### Changed
 
-- **System Theme Sync.** The app now responds to OS dark/light mode changes in real-time when set to "Auto". Previously only checked once at startup.
+- **LOGO 优化 (macOS)**：参考 macOS 26 标准优化 LOGO 样式。
 
-## [0.0.1] - 2026-03-20
+### Known Issues
+
+- **硬件兼容性 (macOS)**：8G 内存版本及 Intel 处理器版本暂无法正常使用，正在研究解决方案。
+
+## [1.1.0] - 2026-04-17
 
 ### Added
 
-- **Local Server Management.** Install, start, stop, and restart Open WebUI directly from the desktop app.
-- **Connection Manager.** Connect to multiple Open WebUI servers with sidebar quick-switch.
-- **Status Bar.** Real-time status indicators for Open WebUI, Open Terminal, and llama.cpp services.
-- **Log Viewer.** Live terminal log viewer for all services with copy, refresh, and resize.
-- **Open Terminal Integration.** Built-in terminal server for AI-powered shell access.
-- **llama.cpp Integration.** Local inference engine with model management and Hugging Face downloads.
-- **Settings.** General, Open WebUI, Terminal, Inference, Models, Connections, and About panels.
-- **Global Shortcut.** Configurable system-wide hotkey to bring the app to the foreground.
-- **Auto-Update.** Built-in update checker with one-click download and install.
-- **Tray Support.** System tray icon with quick actions and optional background mode.
-- **Factory Reset.** One-click removal of all installed components, data, and connections.
-- **Disk Space Check.** Pre-install check requiring at least 5 GB of free storage.
-- **Internationalization.** English, Japanese, Chinese (Simplified & Traditional) translations.
-- **In-App Changelog.** Accessible from the About settings page.
-- **Cross-Platform.** macOS, Windows, and Linux support.
+- **安装包与补丁**：Windows 版制作了更完善的安装包，并引入增量补丁机制，无需删除旧版即可更新。
+- **临时 LOGO**：增加临时版 LOGO。
+
+### Changed
+
+- **安装流程**：优化全自动安装流程，确保高龄用户也能顺畅安装使用。
+- **提示词优化**：解决少部分情况下内容被精简的问题。
+
+### Fixed
+
+- **内容截断**：修复发送内容过长时文字被截断的问题。
+
+## [1.0.1] - 2026-04-17
+
+### Added
+
+- **启动自检**：增加安装/启动自检逻辑，确保文件完整性，预防运行报错。
+
+### Changed
+
+- **提示词优化**：优化默认预设提示词，确保默认模式下的回答完整且准确。
+
+## [1.0.0] - 2026-04-08
+
+### Added
+
+- **配置自适应**：增加安装自动检测电脑配置功能，自动判断并安装匹配的模型（保留：高配Q4、中高配IQ4、中配Q2、低配E4）。
+- **后端自动更新**：设置 llama.cpp 后端为自动下载当前最新版。
+- **模式扩展**：基于词典模式新增“翻译模式”、“学习模式”和“同传模式”。
+
+### Changed
+
+- **词库与提示词**：完善动态词库并优化提示词为开放型，不再锁定特定语言。
+
+## [0.0.4] - 2026-04-03
+
+### Added
+
+- **动态词库**：增加动态词库，优化属灵词汇结果。
+
+### Changed
+
+- **安装流程**：优化安装步骤，不再重复请求安装 CUDA。
+- **模型精简**：仅保留 `4.7-flash` 和 `4-26b` 较大模型进行测试。
+- **后端更新**：更新 llama.cpp 后端至 `b8660` 版本。
+
+### Fixed
+
+- **翻译质量**：增加更多提示词优化翻译结果，提升可用性。
+
+## [2026-03-31]
+
+### Status
+
+- **项目暂停**：由于测试结果不理想，项目暂时转为 API 模式。期间进行了词典增加测试但未发布。
+
+## [0.0.3] - 2026-03-30
+
+### Added
+
+- **模型兼容性**：增加 `TX1.8b`、`TX7b`、`3.5-2b`、`G3-4B` 模型，实现对纯 CPU 机器的兼容。
+- **macOS 支持**：首个 macOS 版本测试跑通。
+
+## [0.0.2] - 2026-03-28
+
+### Changed
+
+- **项目重构**：重构项目，修复安装失败问题，并将部分散落在外的数据整合至项目文件夹内。
+
+## [0.0.1] - 2026-03-27
+
+### Added
+
+- **初始版本**：项目首次跑通，包含 `3.5-4b` 和 `3.5-9b` 模型。

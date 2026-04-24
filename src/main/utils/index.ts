@@ -70,8 +70,15 @@ export const getOpenWebUIDataPath = (): string => {
   if (!fs.existsSync(openWebUIDataDir)) {
     try {
       fs.mkdirSync(openWebUIDataDir, { recursive: true })
+      if (app.isPackaged) {
+        const defaultDataPath = path.join(process.resourcesPath, 'default-data')
+        if (fs.existsSync(defaultDataPath)) {
+          log.info('Copying default data to', openWebUIDataDir)
+          fs.cpSync(defaultDataPath, openWebUIDataDir, { recursive: true })
+        }
+      }
     } catch (error) {
-      log.error(error)
+      log.error('Error creating or copying data directory:', error)
     }
   }
   return path.normalize(openWebUIDataDir)

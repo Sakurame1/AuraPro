@@ -179,15 +179,8 @@
     window.electronAPI?.openInBrowser?.('https://github.com/Sakurame1/AuraPro/')
   }
 
-  const handleCheck = async () => {
-    updateStatus = 'checking'
-    updateError = null
-    try {
-      await window.electronAPI.checkForUpdates()
-    } catch (e: any) {
-      updateStatus = 'error'
-      updateError = e?.message ?? 'Check failed'
-    }
+  const handleCheck = () => {
+    window.electronAPI?.openInBrowser?.('https://github.com/Sakurame1/AuraPro/')
   }
 
   const handleDownload = async () => {
