@@ -594,6 +594,8 @@ export const startServer = async (
         DATA_DIR: dataDir,
         WEBUI_SECRET_KEY: secretKey,
         PYTHONUNBUFFERED: '1',
+        ENABLE_LLAMA_CPP: 'False',
+        ENABLE_OLLAMA: 'False',
         ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
       }
     })

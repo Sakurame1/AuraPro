@@ -176,7 +176,7 @@
   }
 
   const openGithub = () => {
-    window.electronAPI?.openInBrowser?.('https://github.com/open-webui/desktop')
+    window.electronAPI?.openInBrowser?.('https://github.com/Sakurame1/AuraPro')
   }
 
   const handleCheck = async () => {

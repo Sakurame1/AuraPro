@@ -86,5 +86,5 @@ flatpak:
 npmRebuild: true
 publish:
   provider: github
-  owner: aurapro
-  repo: desktop
+  owner: Sakurame1
+  repo: AuraPro

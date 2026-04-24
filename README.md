@@ -1,7 +1,7 @@
 # Open WebUI Desktop
 
-[![Version](https://img.shields.io/github/v/release/open-webui/desktop?label=version&color=%2331c48d)](https://github.com/open-webui/desktop/releases)
-[![Downloads](https://img.shields.io/github/downloads/open-webui/desktop/total?color=%23764abc)](https://github.com/open-webui/desktop/releases)
+[![Version](https://img.shields.io/github/v/release/Sakurame1/AuraPro?label=version&color=%2331c48d)](https://github.com/Sakurame1/AuraPro/releases)
+[![Downloads](https://img.shields.io/github/downloads/Sakurame1/AuraPro/total?color=%23764abc)](https://github.com/Sakurame1/AuraPro/releases)
 [![Discord](https://img.shields.io/discord/1170866489302188073?label=discord&color=%235865F2)](https://discord.gg/open-webui)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
@@ -10,7 +10,7 @@
 Your AI, right on your desktop. [Open WebUI](https://github.com/open-webui/open-webui) as a native app. Run models locally or connect to any server. No Docker, no terminal, no setup. Download, launch, chat.
 
 > [!WARNING]
-> **Early Alpha.** Things move fast and stuff might break. [Report bugs](https://github.com/open-webui/desktop/issues) or [come hang out on Discord](https://discord.gg/open-webui).
+> **Early Alpha.** Things move fast and stuff might break. [Report bugs](https://github.com/Sakurame1/AuraPro/issues) or [come hang out on Discord](https://discord.gg/open-webui).
 
 ## Download
 
@@ -24,7 +24,7 @@ Your AI, right on your desktop. [Open WebUI](https://github.com/open-webui/open-
 | Linux (Snap) | [**Download .snap**](https://github.com/open-webui/desktop/releases/latest/download/open-webui_amd64.snap) |
 | Linux (Flatpak) | [**Download .flatpak**](https://github.com/open-webui/desktop/releases/latest/download/open-webui.flatpak) |
 
-Internet required on first launch. After that, everything works offline. [All releases →](https://github.com/open-webui/desktop/releases)
+Internet required on first launch. After that, everything works offline. [All releases →](https://github.com/Sakurame1/AuraPro/releases)
 
 ## How It Works
 
@@ -63,7 +63,7 @@ No telemetry. No tracking. No phone-home. Your conversations stay on your machin
 ## Community
 
 - 💬 [Discord](https://discord.gg/open-webui) - Come hang out
-- 🐛 [Issues](https://github.com/open-webui/desktop/issues) - Report bugs or request features
+- 🐛 [Issues](https://github.com/Sakurame1/AuraPro/issues) - Report bugs or request features
 - 🌐 [Open WebUI](https://github.com/open-webui/open-webui) - The main project
 - 📖 [Docs](https://docs.openwebui.com) - Full documentation
 
