@@ -156,7 +156,9 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
   if (spotlightAccel) {
     try {
       globalShortcut.register(spotlightAccel, () => {
-        const text = clipboard.readText()?.trim() || ''
+        const text = CONFIG?.spotlightClipboardPaste !== false
+          ? (clipboard.readText()?.trim() || '')
+          : ''
         toggleSpotlight(text)
       })
     } catch (error) {
