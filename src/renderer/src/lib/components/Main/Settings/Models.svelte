@@ -24,12 +24,12 @@
   }
 
   const AURA_MODELS = [
-    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024 },
-    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024 },
-    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024 },
-    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024 },
-    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024 },
-    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024 }
+    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024 },
+    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024 },
+    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024 },
+    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024 },
+    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024 },
+    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'AuraPro', hfRepo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024 }
   ]
 
   // State
@@ -90,7 +90,7 @@
     updated.set(key, { repo, filename: saveAs, percent: 0 })
     activeDownloads = updated
     try {
-      await window.electronAPI.downloadHfModel(repo, originalFilename, undefined, size, saveAs)
+      await window.electronAPI.downloadHfModel(repo, originalFilename, undefined, size, saveAs, 'AuraPro')
     } catch (e) {
       console.error('Failed to download model:', e)
       const cleaned = new Map(activeDownloads)
@@ -273,7 +273,7 @@
           {:else}
             <button
               class="opacity-0 group-hover:opacity-40 hover:!opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
-              onclick={() => startDownload(model.repo, model.filename, model.name, model.sizeBytes)}
+              onclick={() => startDownload(model.hfRepo, model.filename, model.name, model.sizeBytes)}
               title={$i18n.t('common.download')}
             >
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

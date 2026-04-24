@@ -2,7 +2,7 @@
   "name": "aurapro",
   "version": "2.0.3",
   "license": "AGPL-3.0",
-  "description": "AuraPro Desktop",
+  "description": "AuraPro",
   "main": "./out/main/index.js",
   "author": "AuraPro Inc.",
   "homepage": "https://aurapro.com",

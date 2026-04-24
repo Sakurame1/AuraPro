@@ -14,12 +14,12 @@
   let defaultInstallDir = $state('')
 
   const AURA_MODELS = [
-    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, minRam: 8 },
-    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, minRam: 16 },
-    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, minRam: 24 },
-    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, minRam: 32 },
-    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, minRam: 48 },
-    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, minRam: 32 }
+    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, minRam: 8 },
+    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, minRam: 16 },
+    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, minRam: 24 },
+    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, minRam: 32 },
+    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, minRam: 48 },
+    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'AuraPro', hfRepo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, minRam: 32 }
   ]
 
   let selectedModel = $state(AURA_MODELS[0])
@@ -76,11 +76,12 @@
       
       try {
         await window.electronAPI.downloadHfModel(
-          selectedModel.repo, 
+          selectedModel.hfRepo, 
           selectedModel.filename, 
           undefined, 
           selectedModel.sizeBytes, 
-          selectedModel.name
+          selectedModel.name,
+          'AuraPro'
         )
       } catch (e) {
         console.error('Model download failed, but continuing setup', e)

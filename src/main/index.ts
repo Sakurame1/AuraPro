@@ -1126,8 +1126,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: app.getVersion(),
-    version: app.getVersion(),
+    applicationVersion: '2.0.4',
+    version: '2.0.4',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1890,19 +1890,22 @@ if (!gotTheLock) {
     ipcMain.handle('huggingface:repo:files', async (_event, repo: string, token?: string) => {
       return getRepoFiles(repo, token)
     })
-    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string) => {
+    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string, saveRepoAs?: string) => {
       try {
-        sendToRenderer('status:huggingface-download', { repo, filename, status: 'downloading', percent: 0 })
+        const displayRepo = saveRepoAs || repo
+        const displayFilename = saveAs || filename
+        sendToRenderer('status:huggingface-download', { repo: displayRepo, filename: displayFilename, status: 'downloading', percent: 0 })
         const filepath = await downloadModel(repo, filename, (progress) => {
           sendToRenderer('status:huggingface-download', {
-            repo, filename,
+            repo: displayRepo,
+            filename: displayFilename,
             status: 'downloading',
             percent: progress.percent,
             downloadedBytes: progress.downloadedBytes,
             totalBytes: progress.totalBytes
           })
-        }, token, expectedSize, saveAs)
-        sendToRenderer('status:huggingface-download', { repo, filename: saveAs || filename, status: 'done', filepath })
+        }, token, expectedSize, saveAs, saveRepoAs)
+        sendToRenderer('status:huggingface-download', { repo: displayRepo, filename: displayFilename, status: 'done', filepath })
         return filepath
       } catch (error) {
         log.error('Failed to download model:', error)
