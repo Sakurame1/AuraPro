@@ -24,10 +24,49 @@
 
   let selectedModel = $state(AURA_MODELS[0])
   let downloadProgress = $state<number | null>(null)
+  let llamaCppVariant = $state('cpu')
+
+  const platform = $derived((() => {
+    const info = navigator.userAgent
+    if (info.includes('Mac')) return 'darwin'
+    if (info.includes('Win')) return 'win32'
+    return 'linux'
+  })())
+
+  const variantOptions = $derived((() => {
+    if (platform === 'darwin') return [{ value: 'cpu', label: 'Apple Metal (Default)' }]
+    if (platform === 'win32') return [
+      { value: 'cuda-13.1', label: 'NVIDIA CUDA 13.1 (Recommended)' },
+      { value: 'vulkan', label: 'Vulkan (AMD/Intel)' },
+      { value: 'cpu', label: 'CPU Only' }
+    ]
+    return [
+      { value: 'cpu', label: 'CPU Only' },
+      { value: 'vulkan', label: 'Vulkan' },
+      { value: 'rocm', label: 'ROCm' }
+    ]
+  })())
 
   onMount(async () => {
     defaultInstallDir = await window.electronAPI.getInstallDir()
     installDir = defaultInstallDir
+
+    // Detect variant
+    if (platform === 'win32') {
+      try {
+        const gpuInfo = await (navigator as any).gpu?.requestAdapter()
+        const name = gpuInfo?.name?.toLowerCase() || ''
+        if (name.includes('nvidia') || name.includes('geforce') || name.includes('rtx')) {
+          llamaCppVariant = 'cuda-13.1'
+        } else if (name.includes('amd') || name.includes('radeon') || name.includes('intel')) {
+          llamaCppVariant = 'vulkan'
+        }
+      } catch {
+        llamaCppVariant = 'cpu'
+      }
+    } else if (platform === 'darwin') {
+      llamaCppVariant = 'cpu'
+    }
     
     // Recommend model based on memory
     const mem = navigator.deviceMemory || 8
@@ -51,9 +90,18 @@
   const startCoreInstall = async () => {
     phase = 'core_installing'
     try {
-      // Save custom install directory
+      // Save custom install directory and variant
+      const configUpdates: any = {}
       if (installDir && installDir !== defaultInstallDir) {
-        await window.electronAPI.setConfig({ installDir })
+        configUpdates.installDir = installDir
+      }
+      if (llamaCppVariant) {
+        const current = await window.electronAPI.getConfig()
+        configUpdates.llamaCpp = { ...(current.llamaCpp || {}), variant: llamaCppVariant }
+      }
+      
+      if (Object.keys(configUpdates).length > 0) {
+        await window.electronAPI.setConfig(configUpdates)
       }
 
       const ok = await window.electronAPI.installPackage()
@@ -129,7 +177,7 @@
     </p>
 
     <!-- Install location -->
-    <div class="mb-6">
+    <div class="mb-5">
       <div class="text-[11px] opacity-40 mb-1.5">{$i18n.t('setup.install.installLocation')}</div>
       <div class="flex items-center gap-2">
         <div
@@ -145,7 +193,20 @@
           {$i18n.t('setup.install.changeLocation')}
         </button>
       </div>
-      <div class="text-[10px] opacity-20 mt-1">{$i18n.t('setup.install.installLocationDesc')}</div>
+    </div>
+
+    <!-- Variant -->
+    <div class="mb-8">
+      <div class="text-[11px] opacity-40 mb-1.5">Llama.cpp Optimization (Accelerate)</div>
+      <select
+        class="w-full bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-2 border-none outline-none rounded-lg cursor-pointer"
+        onchange={(e) => { llamaCppVariant = (e.target as HTMLSelectElement).value }}
+      >
+        {#each variantOptions as opt}
+          <option value={opt.value} selected={llamaCppVariant === opt.value}>{opt.label}</option>
+        {/each}
+      </select>
+      <div class="text-[10px] opacity-20 mt-1">Select the best version for your GPU to get maximum speed.</div>
     </div>
 
     <button

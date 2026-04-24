@@ -68,18 +68,28 @@
     installLlamaCpp?: boolean; 
     installDir?: string;
     selectedModel?: any;
+    llamaCppVariant?: string;
   }) => {
     installPhase = 'working'
     installError = ''
     installStatus = ''
     toastVisible = false
     try {
-      // Save custom install directory before anything else
+      // Save custom install directory and variant before anything else
+      const configUpdates: any = {}
       if (options?.installDir) {
         const currentDir = await window.electronAPI.getInstallDir()
         if (options.installDir !== currentDir) {
-          await window.electronAPI.setConfig({ installDir: options.installDir })
+          configUpdates.installDir = options.installDir
         }
+      }
+      if (options?.llamaCppVariant) {
+        const currentConfig = await window.electronAPI.getConfig()
+        configUpdates.llamaCpp = { ...(currentConfig.llamaCpp || {}), variant: options.llamaCppVariant }
+      }
+      
+      if (Object.keys(configUpdates).length > 0) {
+        await window.electronAPI.setConfig(configUpdates)
       }
 
       // Check disk space before installing (minimum 5 GB)
@@ -133,9 +143,8 @@
             options.selectedModel.filename,
             undefined,
             options.selectedModel.sizeBytes,
-            options.selectedModel.filename,
-            options.selectedModel.filename.replace('.gguf', ''),
-            'AuraPro'
+            options.selectedModel.name, // e.g. "low_E4.gguf"
+            options.selectedModel.name.replace('.gguf', '') // e.g. "low_E4"
           )
         } catch (e) {
           console.error('Initial model download failed', e)

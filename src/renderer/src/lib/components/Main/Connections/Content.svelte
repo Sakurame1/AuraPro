@@ -30,6 +30,7 @@
       installLlamaCpp?: boolean; 
       installDir?: string;
       selectedModel?: any;
+      llamaCppVariant?: string;
     }) => void
     onAddConnection: () => void
     onSetView: (v: string) => void

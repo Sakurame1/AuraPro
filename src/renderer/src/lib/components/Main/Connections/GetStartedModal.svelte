@@ -26,15 +26,54 @@
   ]
 
   let installOpenTerminal = $state(true)
-  let installLlamaCpp = $state(true)
   let installDir = $state('')
   let defaultInstallDir = $state('')
   let advancedOpen = $state(false)
   let selectedModel = $state(AURA_MODELS[0])
+  let llamaCppVariant = $state('cpu')
+
+  const platform = $derived((() => {
+    const info = navigator.userAgent
+    if (info.includes('Mac')) return 'darwin'
+    if (info.includes('Win')) return 'win32'
+    return 'linux'
+  })())
+
+  const variantOptions = $derived((() => {
+    if (platform === 'darwin') return [{ value: 'cpu', label: 'Apple Metal (Default)' }]
+    if (platform === 'win32') return [
+      { value: 'cuda-13.1', label: 'NVIDIA CUDA 13.1 (Recommended for N-Card)' },
+      { value: 'vulkan', label: 'Vulkan (For AMD/Intel GPU)' },
+      { value: 'cpu', label: 'CPU Only' }
+    ]
+    return [
+      { value: 'cpu', label: 'CPU Only' },
+      { value: 'vulkan', label: 'Vulkan' },
+      { value: 'rocm', label: 'ROCm' }
+    ]
+  })())
 
   onMount(async () => {
     defaultInstallDir = await window.electronAPI.getInstallDir()
     installDir = defaultInstallDir
+
+    // Detect NVIDIA GPU for Windows
+    if (platform === 'win32') {
+      try {
+        const gpuInfo = await (navigator as any).gpu?.requestAdapter()
+        const name = gpuInfo?.name?.toLowerCase() || ''
+        if (name.includes('nvidia') || name.includes('geforce') || name.includes('rtx')) {
+          llamaCppVariant = 'cuda-13.1'
+        } else if (name.includes('amd') || name.includes('radeon') || name.includes('intel')) {
+          llamaCppVariant = 'vulkan'
+        }
+      } catch {
+        // Fallback to CPU if detection fails
+        llamaCppVariant = 'cpu'
+      }
+    } else if (platform === 'darwin') {
+      llamaCppVariant = 'cpu' // Metal is built into CPU variant on Mac
+    }
     
     // Recommend model based on memory
     const mem = (navigator as any).deviceMemory || 8
@@ -107,12 +146,16 @@
             {$i18n.t('main.getStarted.llamaCpp')}
             <span class="text-[9px] opacity-30 uppercase tracking-wide">{$i18n.t('common.experimental')}</span>
           </div>
-          <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{$i18n.t('main.getStarted.llamaCppDesc')}</div>
+          <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Select the optimized version for your hardware</div>
         </div>
-        <Switch
-          checked={installLlamaCpp}
-          onchange={(v) => { installLlamaCpp = v }}
-        />
+        <select
+          class="bg-gray-50 dark:bg-gray-900 text-[12px] text-gray-700 dark:text-gray-200 px-3 py-1.5 border-none outline-none rounded-xl cursor-pointer"
+          onchange={(e) => { llamaCppVariant = (e.target as HTMLSelectElement).value }}
+        >
+          {#each variantOptions as opt}
+            <option value={opt.value} selected={llamaCppVariant === opt.value}>{opt.label}</option>
+          {/each}
+        </select>
       </div>
 
       <!-- Model Selection -->
@@ -175,7 +218,7 @@
     <div class="px-5 pb-5 pt-1 flex flex-col gap-2">
       <button
         class="w-full rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-all duration-200 hover:bg-gray-800 dark:hover:bg-gray-100 active:scale-[0.98] border-none cursor-pointer"
-        onclick={() => onContinue({ installOpenTerminal, installLlamaCpp, installDir, selectedModel })}
+        onclick={() => onContinue({ installOpenTerminal, installLlamaCpp: true, installDir, selectedModel, llamaCppVariant })}
       >
         {$i18n.t('main.getStarted.continue')}
       </button>

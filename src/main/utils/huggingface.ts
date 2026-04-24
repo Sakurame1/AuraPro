@@ -92,8 +92,12 @@ export const cancelDownload = (repo?: string, filename?: string): void => {
  */
 export const listModels = (): HfModel[] => {
   const manifest = readManifest()
-  // Filter out entries whose files no longer exist
-  return manifest.filter((m) => fs.existsSync(m.filepath))
+  const installDir = getInstallDir()
+  // Filter out entries whose files no longer exist, resolving relative paths
+  return manifest.filter((m) => {
+    const fullPath = path.isAbsolute(m.filepath) ? m.filepath : path.join(installDir, m.filepath)
+    return fs.existsSync(fullPath)
+  })
 }
 
 /**
@@ -123,21 +127,14 @@ export const downloadModel = async (
   token?: string,
   expectedSize?: number,
   saveAs?: string,
-  saveRepoAs?: string,
-  subDir?: string
+  saveRepoAs?: string
 ): Promise<string> => {
   const storageRepo = saveRepoAs || repo
   const slug = repoSlug(storageRepo)
   
-  let repoDir: string
-  if (subDir === 'AuraPro') {
-    // Save directly to models/AuraPro
-    repoDir = path.join(getModelsDir(), 'AuraPro')
-  } else if (subDir) {
-    repoDir = path.join(getModelsDir(), subDir, slug)
-  } else {
-    repoDir = path.join(getHfCacheDir(), slug)
-  }
+  // If saveRepoAs is provided, we use the cache dir directly to avoid deep nesting
+  // unless the user specifically wants a subfolder.
+  const repoDir = saveRepoAs ? getHfCacheDir() : path.join(getHfCacheDir(), slug)
   
   if (!fs.existsSync(repoDir)) {
     fs.mkdirSync(repoDir, { recursive: true })
@@ -228,11 +225,17 @@ export const downloadModel = async (
 
   // Update manifest
   const manifest = readManifest()
-  const existing = manifest.findIndex((m) => m.repo === storageRepo && m.filename === (saveAs || filename))
+  const storageRepoName = storageRepo.endsWith('.gguf') ? storageRepo.slice(0, -5) : storageRepo
+  
+  const existing = manifest.findIndex((m) => m.repo === storageRepoName && m.filename === (saveAs || filename))
+  
+  // Store path relative to the install directory for portability
+  const relativePath = path.relative(getInstallDir(), destPath)
+
   const entry: HfModel = {
-    repo: storageRepo,
+    repo: storageRepoName,
     filename: saveAs || filename,
-    filepath: destPath,
+    filepath: relativePath,
     size: fs.statSync(destPath).size,
     downloadedAt: new Date().toISOString()
   }
@@ -251,8 +254,12 @@ export const downloadModel = async (
  * Delete a downloaded model.
  */
 export const deleteModel = (repo: string, filename: string): boolean => {
-  const slug = repoSlug(repo)
-  const filepath = path.join(getHfCacheDir(), slug, filename)
+  const manifest = readManifest()
+  const model = manifest.find((m) => m.repo === repo && m.filename === filename)
+  if (!model) return false
+
+  const installDir = getInstallDir()
+  const filepath = path.isAbsolute(model.filepath) ? model.filepath : path.join(installDir, model.filepath)
 
   try {
     if (fs.existsSync(filepath)) {
@@ -264,15 +271,14 @@ export const deleteModel = (repo: string, filename: string): boolean => {
   }
 
   // Remove from manifest
-  const manifest = readManifest()
   const updated = manifest.filter((m) => !(m.repo === repo && m.filename === filename))
   writeManifest(updated)
 
-  // Clean up empty repo dir
-  const repoDir = path.join(getHfCacheDir(), slug)
+  // Clean up empty repo dir if it was in a subfolder
+  const repoDir = path.dirname(filepath)
   try {
     const remaining = fs.readdirSync(repoDir)
-    if (remaining.length === 0) {
+    if (remaining.length === 0 && repoDir !== getHfCacheDir()) {
       fs.rmdirSync(repoDir)
     }
   } catch {}
@@ -286,7 +292,15 @@ export const deleteModel = (repo: string, filename: string): boolean => {
  */
 export const getModelInfo = (repo: string, filename: string): HfModel | null => {
   const manifest = readManifest()
-  return manifest.find((m) => m.repo === repo && m.filename === filename) ?? null
+  const model = manifest.find((m) => m.repo === repo && m.filename === filename) ?? null
+  if (model) {
+    const installDir = getInstallDir()
+    return {
+      ...model,
+      filepath: path.isAbsolute(model.filepath) ? model.filepath : path.join(installDir, model.filepath)
+    }
+  }
+  return null
 }
 
 // ─── HF API Integration ────────────────────────────────
