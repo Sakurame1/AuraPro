@@ -141,6 +141,10 @@
       )
       
       phase = 'done'
+      
+      // Restart llama.cpp so it picks up the new model
+      await window.electronAPI.startLlamaCpp()
+      
       setTimeout(async () => {
         await window.electronAPI.connectTo('local')
         onComplete()

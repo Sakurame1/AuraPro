@@ -505,7 +505,7 @@ export const startLlamaCpp = async (
 
   const extraArgs = llamaConfig.extraArgs ?? []
   const ctxSize = llamaConfig.ctxSize || 16384
-  const modelsDir = getModelsDir()
+  const modelsDir = path.join(getInstallDir(), 'models', 'huggingface')
   const commandArgs = [
     '--host', host,
     '--port', availablePort.toString(),

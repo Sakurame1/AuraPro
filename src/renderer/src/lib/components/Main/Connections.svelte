@@ -149,6 +149,9 @@
         } catch (e) {
           console.error('Initial model download failed', e)
         }
+        
+        // Restart llama.cpp so it picks up the new model
+        await window.electronAPI.startLlamaCpp()
       }
 
       // Wait for server to actually be reachable before showing connected view
