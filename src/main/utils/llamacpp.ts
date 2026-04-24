@@ -504,8 +504,21 @@ export const startLlamaCpp = async (
   }
 
   const extraArgs = llamaConfig.extraArgs ?? []
+  const ctxSize = llamaConfig.ctxSize || 16384
   const modelsDir = getModelsDir()
-  const commandArgs = ['--host', host, '--port', availablePort.toString(), '--models-dir', modelsDir, ...extraArgs]
+  const commandArgs = [
+    '--host', host,
+    '--port', availablePort.toString(),
+    '--models-dir', modelsDir,
+    '--models-max', '1',
+    '--ctx-size', ctxSize.toString(),
+    '--temp', '1.0',
+    '--top-p', '0.95',
+    '--min-p', '0.05',
+    '--jinja',
+    '--chat-template-kwargs', '{"enable_thinking":false}',
+    ...extraArgs
+  ]
 
   log.info('Starting llama-server:', binary, commandArgs.join(' '))
 

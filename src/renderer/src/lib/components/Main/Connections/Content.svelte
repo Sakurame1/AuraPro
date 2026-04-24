@@ -25,7 +25,12 @@
     connecting: boolean
     error: string
     autoInstall: boolean
-    onStartInstall: (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean; installDir?: string }) => void
+    onStartInstall: (options?: { 
+      installOpenTerminal?: boolean; 
+      installLlamaCpp?: boolean; 
+      installDir?: string;
+      selectedModel?: any;
+    }) => void
     onAddConnection: () => void
     onSetView: (v: string) => void
     showAddConnectionModal: boolean

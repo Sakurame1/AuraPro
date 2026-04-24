@@ -63,7 +63,12 @@
   let llamaCppInfo = $state<{ url?: string; pid?: number } | null>(null)
   let llamaCppSetupStatus = $state('')
 
-  const startInstall = async (options?: { installOpenTerminal?: boolean; installLlamaCpp?: boolean; installDir?: string }) => {
+  const startInstall = async (options?: { 
+    installOpenTerminal?: boolean; 
+    installLlamaCpp?: boolean; 
+    installDir?: string;
+    selectedModel?: any;
+  }) => {
     installPhase = 'working'
     installError = ''
     installStatus = ''
@@ -118,6 +123,23 @@
       await window.electronAPI.setDefaultConnection('local')
       connections.set(await window.electronAPI.getConnections())
       config.set(await window.electronAPI.getConfig())
+
+      // Download selected model if provided
+      if (options?.selectedModel) {
+        installStatus = `Downloading model: ${options.selectedModel.name}...`
+        try {
+          await window.electronAPI.downloadHfModel(
+            options.selectedModel.hfRepo,
+            options.selectedModel.filename,
+            undefined,
+            options.selectedModel.sizeBytes,
+            options.selectedModel.name,
+            'AuraPro'
+          )
+        } catch (e) {
+          console.error('Initial model download failed', e)
+        }
+      }
 
       // Wait for server to actually be reachable before showing connected view
       installStatus = $i18n.t('main.install.launchingOpenWebUI')

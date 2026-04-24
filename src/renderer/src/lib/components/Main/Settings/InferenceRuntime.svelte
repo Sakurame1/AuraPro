@@ -462,6 +462,20 @@
     </select>
   </div>
 
+  <!-- Context Size -->
+  <div class="py-4 flex items-center justify-between">
+    <div>
+      <div class="text-[13px] opacity-70">Context Size (上下文长度)</div>
+      <div class="text-[11px] opacity-25 mt-0.5">Set the maximum context length for models (default: 16384).</div>
+    </div>
+    <input
+      type="number"
+      class="bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60 w-20 text-right"
+      value={$config?.llamaCpp?.ctxSize ?? 16384}
+      onchange={(e) => updateConfig('ctxSize', parseInt((e.target as HTMLInputElement).value) || 16384)}
+    />
+  </div>
+
   <!-- Port -->
   <div class="py-4 flex items-center justify-between">
     <div>

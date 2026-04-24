@@ -5,21 +5,43 @@
   import Switch from '../../common/Switch.svelte'
 
   interface Props {
-    onContinue: (options: { installOpenTerminal: boolean; installLlamaCpp: boolean; installDir: string }) => void
+    onContinue: (options: { 
+      installOpenTerminal: boolean; 
+      installLlamaCpp: boolean; 
+      installDir: string;
+      selectedModel: any;
+    }) => void
     onCancel: () => void
   }
 
   let { onContinue, onCancel }: Props = $props()
+
+  const AURA_MODELS = [
+    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, minRam: 8 },
+    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, minRam: 16 },
+    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, minRam: 24 },
+    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, minRam: 32 },
+    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, minRam: 48 },
+    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'AuraPro', hfRepo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, minRam: 32 }
+  ]
 
   let installOpenTerminal = $state(true)
   let installLlamaCpp = $state(true)
   let installDir = $state('')
   let defaultInstallDir = $state('')
   let advancedOpen = $state(false)
+  let selectedModel = $state(AURA_MODELS[0])
 
   onMount(async () => {
     defaultInstallDir = await window.electronAPI.getInstallDir()
     installDir = defaultInstallDir
+    
+    // Recommend model based on memory
+    const mem = (navigator as any).deviceMemory || 8
+    if (mem >= 32) selectedModel = AURA_MODELS[3]
+    else if (mem >= 24) selectedModel = AURA_MODELS[2]
+    else if (mem >= 16) selectedModel = AURA_MODELS[1]
+    else selectedModel = AURA_MODELS[0]
   })
 
   const changeInstallDir = async () => {
@@ -68,7 +90,7 @@
 
     <!-- Options -->
     <div class="px-6 py-4 flex flex-col divide-y divide-gray-100/30 dark:divide-gray-800/15">
-      <div class="py-3.5 flex items-center justify-between gap-4">
+      <div class="py-3 flex items-center justify-between gap-4">
         <div>
           <div class="text-[13px] font-medium text-gray-700 dark:text-gray-300">{$i18n.t('main.getStarted.openTerminal')}</div>
           <div class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{$i18n.t('main.getStarted.openTerminalDesc')}</div>
@@ -79,7 +101,7 @@
         />
       </div>
 
-      <div class="py-3.5 flex items-center justify-between gap-4">
+      <div class="py-3 flex items-center justify-between gap-4">
         <div>
           <div class="text-[13px] font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
             {$i18n.t('main.getStarted.llamaCpp')}
@@ -91,6 +113,24 @@
           checked={installLlamaCpp}
           onchange={(v) => { installLlamaCpp = v }}
         />
+      </div>
+
+      <!-- Model Selection -->
+      <div class="py-4">
+        <div class="text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-2">Select Model (Recommended: {selectedModel.name})</div>
+        <div class="grid grid-cols-2 gap-2">
+          {#each AURA_MODELS as model}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div 
+              class="flex flex-col px-3 py-2 rounded-xl border border-solid cursor-pointer transition-all {selectedModel.name === model.name ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10' : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'}"
+              onclick={() => selectedModel = model}
+            >
+              <div class="text-[11px] font-medium {selectedModel.name === model.name ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}">{model.name}</div>
+              <div class="text-[9px] text-gray-400 dark:text-gray-500">{model.sizeStr} · {model.minRam}G RAM</div>
+            </div>
+          {/each}
+        </div>
       </div>
     </div>
 
@@ -110,7 +150,7 @@
       </button>
 
       {#if advancedOpen}
-        <div class="mt-3">
+        <div class="mt-3" transition:fade={{ duration: 150 }}>
           <div class="text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">{$i18n.t('setup.install.installLocation')}</div>
           <div class="flex items-center gap-2">
             <div
@@ -135,7 +175,7 @@
     <div class="px-5 pb-5 pt-1 flex flex-col gap-2">
       <button
         class="w-full rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-all duration-200 hover:bg-gray-800 dark:hover:bg-gray-100 active:scale-[0.98] border-none cursor-pointer"
-        onclick={() => onContinue({ installOpenTerminal, installLlamaCpp, installDir })}
+        onclick={() => onContinue({ installOpenTerminal, installLlamaCpp, installDir, selectedModel })}
       >
         {$i18n.t('main.getStarted.continue')}
       </button>
