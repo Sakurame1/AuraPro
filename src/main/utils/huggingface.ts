@@ -121,7 +121,8 @@ export const downloadModel = async (
   filename: string,
   onProgress?: (progress: HfDownloadProgress) => void,
   token?: string,
-  expectedSize?: number
+  expectedSize?: number,
+  saveAs?: string
 ): Promise<string> => {
   const slug = repoSlug(repo)
   const repoDir = path.join(getHfCacheDir(), slug)
@@ -129,7 +130,7 @@ export const downloadModel = async (
     fs.mkdirSync(repoDir, { recursive: true })
   }
 
-  const destPath = path.join(repoDir, filename)
+  const destPath = path.join(repoDir, saveAs || filename)
 
   // Already downloaded?
   if (fs.existsSync(destPath)) {
@@ -217,7 +218,7 @@ export const downloadModel = async (
   const existing = manifest.findIndex((m) => m.repo === repo && m.filename === filename)
   const entry: HfModel = {
     repo,
-    filename,
+    filename: saveAs || filename,
     filepath: destPath,
     size: fs.statSync(destPath).size,
     downloadedAt: new Date().toISOString()

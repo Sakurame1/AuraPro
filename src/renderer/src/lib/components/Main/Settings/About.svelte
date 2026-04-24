@@ -220,14 +220,13 @@
 
   const parseChangelog = (md: string) => {
     const entries: { version: string; date: string; body: string }[] = []
-    const sections = md.split(/^## /m).slice(1)
+    const sections = md.split(/\n(?=AuraPro-)/g)
     for (const section of sections) {
-      const headerMatch = section.match(/^\[([^\]]+)\](?:\s*-\s*(.+))?/)
+      const headerMatch = section.match(/^AuraPro-([^-]+(?:-[^-]+)*)-(\d{4}-\d{2}-\d{2})/)
       if (!headerMatch) continue
       const version = headerMatch[1]
-      const date = headerMatch[2]?.trim() ?? ''
+      const date = headerMatch[2]
       const body = section.slice(section.indexOf('\n') + 1).trim()
-      if (version === 'Unreleased' && !body) continue
       entries.push({ version, date, body })
     }
     changelogEntries = entries
@@ -235,8 +234,15 @@
 
   const renderMarkdown = (md: string): string => {
     return md
-      .replace(/^### (.+)$/gm, '<div class="text-[11px] opacity-50 font-semibold mt-3 mb-1">$1</div>')
-      .replace(/^- (.+)$/gm, '<div class="text-[11px] opacity-40 pl-2 leading-relaxed">• $1</div>')
+      .split('\n')
+      .map(line => {
+        line = line.trim()
+        if (!line) return ''
+        if (line.startsWith('###')) return `<div class="text-[11px] opacity-50 font-semibold mt-3 mb-1">${line.replace('###', '').trim()}</div>`
+        if (line.startsWith('-')) return `<div class="text-[11px] opacity-40 pl-2 leading-relaxed">• ${line.replace('-', '').trim()}</div>`
+        return `<div class="text-[11px] opacity-40 pl-2 leading-relaxed">• ${line}</div>`
+      })
+      .join('')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.+?)`/g, '<code class="text-[10px] bg-white/[0.06] px-1 py-0.5 rounded">$1</code>')
   }

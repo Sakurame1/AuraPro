@@ -23,6 +23,15 @@
     size: number
   }
 
+  const AURA_MODELS = [
+    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024 },
+    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024 },
+    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024 },
+    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024 },
+    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024 },
+    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024 }
+  ]
+
   // State
   let models = $state<HfModel[]>([])
   let loaded = $state(false)
@@ -35,11 +44,6 @@
   let searchResults = $state<HfRepoResult[]>([])
   let searching = $state(false)
   let searchTimer: ReturnType<typeof setTimeout> | null = null
-
-  // Repo browser state
-  let selectedRepo = $state<string | null>(null)
-  let repoFiles = $state<HfFileInfo[]>([])
-  let loadingFiles = $state(false)
 
   // Download state — track active downloads in the "Downloaded" section
   let activeDownloads = $state<Map<string, { repo: string; filename: string; percent: number }>>(new Map())
@@ -78,52 +82,15 @@
   const onSearchInput = (e: Event) => {
     const q = (e.target as HTMLInputElement).value
     searchQuery = q
-    searchError = ''
-    if (searchTimer) clearTimeout(searchTimer)
-
-    if (!q.trim()) {
-      searchResults = []
-      searching = false
-      return
-    }
-
-    searching = true
-    searchTimer = setTimeout(async () => {
-      try {
-        searchResults = await window.electronAPI.searchHfModels(q.trim())
-      } catch (e: any) {
-        console.error('Search failed:', e)
-        searchError = e?.message ?? 'Search failed'
-        searchResults = []
-      }
-      searching = false
-    }, 400)
   }
 
-  const selectRepo = async (repoId: string) => {
-    selectedRepo = repoId
-    loadingFiles = true
-    repoFiles = []
-    try {
-      repoFiles = await window.electronAPI.getHfRepoFiles(repoId)
-    } catch (e) {
-      console.error('Failed to load files:', e)
-    }
-    loadingFiles = false
-  }
-
-  const backToSearch = () => {
-    selectedRepo = null
-    repoFiles = []
-  }
-
-  const startDownload = async (repo: string, filename: string, size?: number) => {
-    const key = dlKey(repo, filename)
+  const startDownload = async (repo: string, originalFilename: string, saveAs: string, size?: number) => {
+    const key = dlKey(repo, saveAs)
     const updated = new Map(activeDownloads)
-    updated.set(key, { repo, filename, percent: 0 })
+    updated.set(key, { repo, filename: saveAs, percent: 0 })
     activeDownloads = updated
     try {
-      await window.electronAPI.downloadHfModel(repo, filename, undefined, size)
+      await window.electronAPI.downloadHfModel(repo, originalFilename, undefined, size, saveAs)
     } catch (e) {
       console.error('Failed to download model:', e)
       const cleaned = new Map(activeDownloads)
@@ -268,135 +235,56 @@
   <!-- Download from HF -->
   <div class="py-4">
     <div class="text-[12px] opacity-50 mb-2">
-      {#if selectedRepo}
-        <button
-          class="opacity-70 hover:opacity-100 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0 text-[12px] flex items-center gap-1 font-mono truncate"
-          onclick={backToSearch}
-        >
-          <svg class="w-3 h-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-          <span class="truncate">{selectedRepo}</span>
-        </button>
-      {:else}
-        {$i18n.t('settings.models.downloadFromHF')}
-      {/if}
+      {$i18n.t('settings.models.downloadFromHF')} - AuraPro Models
     </div>
 
-    {#if selectedRepo}
-      <!-- Repo file browser -->
-      {#if loadingFiles}
-        <div class="flex items-center gap-2 py-3 justify-center">
-          <div class="w-3 h-3 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin"></div>
-          <span class="text-[11px] opacity-30">{$i18n.t('settings.models.loadingFiles')}</span>
-        </div>
-      {:else if repoFiles.length === 0}
-        <div class="text-[11px] opacity-20 text-center py-3">{$i18n.t('settings.models.noGgufFiles')}</div>
-      {:else}
-        <div class="flex flex-col">
-          {#each repoFiles as file}
-            {@const downloaded = isDownloaded(selectedRepo, file.filename)}
-            {@const dlActive = isDownloading(selectedRepo, file.filename)}
-            <div class="flex items-center gap-3 py-2 group">
-              <div class="min-w-0 flex-1">
-                <div class="text-[12px] opacity-50 truncate font-mono">{file.filename}</div>
-                <div class="text-[10px] opacity-20 mt-0.5">{formatSize(file.size)}</div>
-                {#if dlActive}
-                  <div class="mt-1.5 w-full h-[3px] bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      class="h-full bg-emerald-400/70 rounded-full transition-[width] duration-300"
-                      style="width: {getDownloadPercent(selectedRepo, file.filename)}%"
-                    ></div>
-                  </div>
-                {/if}
+    <div class="flex flex-col mt-2">
+      {#each AURA_MODELS as model}
+        {@const downloaded = isDownloaded(model.repo, model.name)}
+        {@const dlActive = isDownloading(model.repo, model.name)}
+        <div class="flex items-center gap-3 py-2 group">
+          <div class="min-w-0 flex-1">
+            <div class="text-[12px] opacity-50 truncate font-mono">{model.name}</div>
+            <div class="text-[10px] opacity-20 mt-0.5">{model.sizeStr}</div>
+            {#if dlActive}
+              <div class="mt-1.5 w-full h-[3px] bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-emerald-400/70 rounded-full transition-[width] duration-300"
+                  style="width: {getDownloadPercent(model.repo, model.name)}%"
+                ></div>
               </div>
-              {#if downloaded}
-                <span class="text-[10px] opacity-25 shrink-0">{$i18n.t('settings.models.downloaded')}</span>
-              {:else if dlActive}
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <span class="text-[10px] opacity-40 font-mono">{getDownloadPercent(selectedRepo, file.filename).toFixed(0)}%</span>
-                  <button
-                    class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0.5"
-                    onclick={() => cancelDownload(selectedRepo, file.filename)}
-                    title={$i18n.t('settings.models.cancelDownload')}
-                  >
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              {:else}
-                <button
-                  class="opacity-0 group-hover:opacity-40 hover:!opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
-                  onclick={() => startDownload(selectedRepo, file.filename, file.size)}
-                  title={$i18n.t('common.download')}
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
-                </button>
-              {/if}
+            {/if}
+          </div>
+          {#if downloaded}
+            <span class="text-[10px] opacity-25 shrink-0">{$i18n.t('settings.models.downloaded')}</span>
+          {:else if dlActive}
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] opacity-40 font-mono">{getDownloadPercent(model.repo, model.name).toFixed(0)}%</span>
+              <button
+                class="opacity-30 hover:opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-0.5"
+                onclick={() => cancelDownload(model.repo, model.name)}
+                title={$i18n.t('settings.models.cancelDownload')}
+              >
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-          {/each}
-        </div>
-      {/if}
-
-    {:else}
-      <!-- Search -->
-      <div class="relative mb-2">
-        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 opacity-25 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-        <input
-          type="text"
-          class="bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] pl-8 pr-3 py-2 border-none outline-none rounded-xl opacity-70 w-full"
-          placeholder={$i18n.t('settings.models.searchPlaceholder')}
-          value={searchQuery}
-          oninput={onSearchInput}
-        />
-        {#if searching}
-          <div class="w-3 h-3 rounded-full border-[1.5px] border-black/20 dark:border-white/30 border-t-transparent animate-spin absolute right-2.5 top-1/2 -translate-y-1/2"></div>
-        {/if}
-      </div>
-
-      {#if searchError}
-        <div class="text-[11px] text-red-400/70 text-center py-2">{searchError}</div>
-      {:else if searchResults.length > 0}
-        <div class="flex flex-col max-h-[300px] overflow-y-auto">
-          {#each searchResults as repo}
+          {:else}
             <button
-              class="flex items-center justify-between gap-2 py-2 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-lg transition border-none text-left w-full text-[#1d1d1f] dark:text-[#fafafa] bg-transparent px-1"
-              onclick={() => selectRepo(repo.id)}
+              class="opacity-0 group-hover:opacity-40 hover:!opacity-70 transition bg-transparent border-none text-[#1d1d1f] dark:text-[#fafafa] p-1 shrink-0"
+              onclick={() => startDownload(model.repo, model.filename, model.name, model.sizeBytes)}
+              title={$i18n.t('common.download')}
             >
-              <div class="min-w-0 flex-1">
-                <div class="text-[12px] opacity-60 truncate">{repo.id}</div>
-                <div class="text-[10px] opacity-25 flex items-center gap-2 mt-0.5">
-                  <span class="flex items-center gap-0.5">
-                    <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    {formatDownloads(repo.downloads)}
-                  </span>
-                  <span class="flex items-center gap-0.5">
-                    <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                    </svg>
-                    {repo.likes}
-                  </span>
-                </div>
-              </div>
-              <svg class="w-3 h-3 opacity-15 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
             </button>
-          {/each}
+          {/if}
         </div>
-      {:else if searchQuery.trim() && !searching}
-        <div class="text-[11px] opacity-20 text-center py-3">{$i18n.t('settings.models.noReposFound')}</div>
-      {:else if !searchQuery.trim()}
-        <div class="text-[11px] opacity-20 text-center py-3">{$i18n.t('settings.models.searchForModels')}</div>
-      {/if}
-    {/if}
+      {/each}
+    </div>
+  </div>
   </div>
 
 </div>

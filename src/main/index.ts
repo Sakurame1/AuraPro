@@ -22,6 +22,11 @@ import { readFile, statfs } from 'fs/promises'
 
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
+if (app.isPackaged) {
+  const portableDataPath = join(path.dirname(process.execPath), 'AuraProData')
+  app.setPath('userData', portableDataPath)
+}
+
 import {
   getLogFilePath,
   checkUrlAndOpen,
@@ -211,7 +216,7 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
 
   // Global shortcut – bring main window to foreground
   if (globalAccel) {
-    tryRegisterShortcut(globalAccel, 'Open WebUI', () => {
+    tryRegisterShortcut(globalAccel, 'AuraPro', () => {
       if (mainWindow) {
         mainWindow.show()
         mainWindow.focus()
@@ -780,7 +785,7 @@ const updateTray = () => {
 
   const trayMenuTemplate = [
     {
-      label: 'Show Open WebUI',
+      label: 'Show AuraPro',
       click: () => {
         mainWindow?.show()
         mainWindow?.focus()
@@ -806,7 +811,7 @@ const updateTray = () => {
         ]
       : []),
     {
-      label: 'Quit Open WebUI',
+      label: 'Quit AuraPro',
       accelerator: 'CommandOrControl+Q',
       click: async () => {
         await stopServerHandler()
@@ -1091,10 +1096,10 @@ const resetAppHandler = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()
     CONFIG = await getConfig() // reload from defaults since config.json was deleted
-    new Notification({ title: 'Open WebUI', body: 'Application has been reset.' }).show()
-  } catch (error) {
+    new Notification({ title: 'AuraPro', body: 'Application has been reset.' }).show()
+  } catch (error: any) {
     log.error('Failed to reset:', error)
-    new Notification({ title: 'Open WebUI', body: `Reset failed: ${error.message}` }).show()
+    new Notification({ title: 'AuraPro', body: `Reset failed: ${error.message}` }).show()
   }
 }
 
@@ -1119,12 +1124,12 @@ if (!gotTheLock) {
   })
 
   app.setAboutPanelOptions({
-    applicationName: 'Open WebUI',
+    applicationName: 'AuraPro',
     iconPath: icon,
     applicationVersion: app.getVersion(),
     version: app.getVersion(),
-    website: 'https://openwebui.com',
-    copyright: `© ${new Date().getFullYear()} Open WebUI`
+    website: 'https://aurapro.site',
+    copyright: `© ${new Date().getFullYear()} AuraPro`
   })
 
   app.whenReady().then(async () => {
@@ -1132,7 +1137,7 @@ if (!gotTheLock) {
     loadSpotlightPosition()
     log.info('Config:', CONFIG)
 
-    app.name = 'Open WebUI'
+    app.name = 'AuraPro'
     if (process.platform === 'darwin' && app.dock) {
       app.dock.setIcon(icon)
     }
@@ -1285,7 +1290,7 @@ if (!gotTheLock) {
         const owuiVersion = CONFIG?.localServer?.version || undefined
         const otVersion = CONFIG?.openTerminal?.version || undefined
 
-        sendToRenderer('status:install', 'Installing Open WebUI…')
+        sendToRenderer('status:install', 'Installing AuraPro…')
         await installPackage('open-webui', owuiVersion, (status: string) => {
           sendToRenderer('status:install', status)
         })
@@ -1295,6 +1300,20 @@ if (!gotTheLock) {
         }).catch((e) =>
           log.warn('open-terminal install failed (non-fatal):', e)
         )
+
+        try {
+          const packagedDataDir = app.isPackaged
+            ? join(process.resourcesPath, 'data')
+            : join(app.getAppPath(), 'data')
+          const targetDataDir = join(getUserDataPath(), 'data')
+          if (existsSync(packagedDataDir)) {
+            require('fs').cpSync(packagedDataDir, targetDataDir, { recursive: true })
+            log.info('Copied bundled data to', targetDataDir)
+          }
+        } catch (e) {
+          log.error('Failed to copy bundled data:', e)
+        }
+
         sendToRenderer('status:package', true)
         return true
       } catch (error) {
@@ -1398,8 +1417,8 @@ if (!gotTheLock) {
     ipcMain.handle('app:changelog', async () => {
       try {
         const changelogPath = app.isPackaged
-          ? join(process.resourcesPath, 'CHANGELOG.md')
-          : join(app.getAppPath(), 'CHANGELOG.md')
+          ? join(process.resourcesPath, '更新日志.txt')
+          : join(app.getAppPath(), '更新日志.txt')
         return await readFile(changelogPath, 'utf-8')
       } catch {
         return null
@@ -1480,7 +1499,7 @@ if (!gotTheLock) {
               log.warn(`spotlight:captureRegion — screen recording permission: ${status}`)
               new Notification({
                 title: 'Screen Recording Permission Required',
-                body: 'Open WebUI needs Screen Recording access to capture screenshots. Please enable it in System Settings → Privacy & Security → Screen Recording, then restart the app.'
+                body: 'AuraPro needs Screen Recording access to capture screenshots. Please enable it in System Settings → Privacy & Security → Screen Recording, then restart the app.'
               }).show()
               // Open the correct System Preferences pane
               shell.openExternal(
@@ -1871,7 +1890,7 @@ if (!gotTheLock) {
     ipcMain.handle('huggingface:repo:files', async (_event, repo: string, token?: string) => {
       return getRepoFiles(repo, token)
     })
-    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number) => {
+    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string) => {
       try {
         sendToRenderer('status:huggingface-download', { repo, filename, status: 'downloading', percent: 0 })
         const filepath = await downloadModel(repo, filename, (progress) => {
@@ -1882,8 +1901,8 @@ if (!gotTheLock) {
             downloadedBytes: progress.downloadedBytes,
             totalBytes: progress.totalBytes
           })
-        }, token, expectedSize)
-        sendToRenderer('status:huggingface-download', { repo, filename, status: 'done', filepath })
+        }, token, expectedSize, saveAs)
+        sendToRenderer('status:huggingface-download', { repo, filename: saveAs || filename, status: 'done', filepath })
         return filepath
       } catch (error) {
         log.error('Failed to download model:', error)
@@ -1960,7 +1979,7 @@ if (!gotTheLock) {
     // Create tray
     const trayIcon = nativeImage.createFromPath(icon)
     tray = new Tray(trayIcon.resize({ width: 16, height: 16 }))
-    tray.setToolTip('Open WebUI')
+    tray.setToolTip('AuraPro')
     updateTray()
 
 

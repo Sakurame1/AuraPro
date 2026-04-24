@@ -151,8 +151,8 @@ const api = {
   // Hugging Face models
   listHfModels: () => ipcRenderer.invoke('huggingface:models:list'),
   getHfModelsDir: () => ipcRenderer.invoke('huggingface:models:dir'),
-  downloadHfModel: (repo: string, filename: string, token?: string, expectedSize?: number) =>
-    ipcRenderer.invoke('huggingface:models:download', repo, filename, token, expectedSize),
+  downloadHfModel: (repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string) =>
+    ipcRenderer.invoke('huggingface:models:download', repo, filename, token, expectedSize, saveAs),
   deleteHfModel: (repo: string, filename: string) =>
     ipcRenderer.invoke('huggingface:models:delete', repo, filename),
   cancelHfDownload: (repo?: string, filename?: string) =>

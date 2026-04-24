@@ -13,9 +13,38 @@
   let installDir = $state('')
   let defaultInstallDir = $state('')
 
+  const AURA_MODELS = [
+    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, minRam: 8 },
+    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, minRam: 16 },
+    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, minRam: 24 },
+    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, minRam: 32 },
+    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, minRam: 48 },
+    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, minRam: 32 }
+  ]
+
+  let selectedModel = $state(AURA_MODELS[0])
+  let downloadProgress = $state<number | null>(null)
+
   onMount(async () => {
     defaultInstallDir = await window.electronAPI.getInstallDir()
     installDir = defaultInstallDir
+    
+    // Recommend model based on memory
+    const mem = navigator.deviceMemory || 8
+    if (mem >= 32) selectedModel = AURA_MODELS[3]
+    else if (mem >= 24) selectedModel = AURA_MODELS[2]
+    else if (mem >= 16) selectedModel = AURA_MODELS[1]
+    else selectedModel = AURA_MODELS[0]
+
+    window.electronAPI.onData((data: any) => {
+      if (data.type === 'status:huggingface-download') {
+        const d = data.data
+        if (d?.status === 'downloading') {
+          downloadProgress = d.percent ?? 0
+        }
+      }
+    })
+
     if (autoStart) install()
   })
 
@@ -42,6 +71,20 @@
       await window.electronAPI.setDefaultConnection('local')
       connections.set(await window.electronAPI.getConnections())
       config.set(await window.electronAPI.getConfig())
+
+      phase = 'downloading_model'
+      
+      try {
+        await window.electronAPI.downloadHfModel(
+          selectedModel.repo, 
+          selectedModel.filename, 
+          undefined, 
+          selectedModel.sizeBytes, 
+          selectedModel.name
+        )
+      } catch (e) {
+        console.error('Model download failed, but continuing setup', e)
+      }
 
       phase = 'done'
       setTimeout(async () => {
@@ -98,6 +141,21 @@
       <div class="text-[10px] opacity-20 mt-1">{$i18n.t('setup.install.installLocationDesc')}</div>
     </div>
 
+    <!-- Model Selection -->
+    <div class="mb-6">
+      <div class="text-[11px] opacity-40 mb-1.5">Model Selection (Recommended based on System RAM: {navigator.deviceMemory || '?'}GB)</div>
+      <select
+        bind:value={selectedModel}
+        class="w-full px-3 py-2 bg-black/[0.04] dark:bg-white/[0.06] text-[12px] text-[#1d1d1f] dark:text-[#fafafa] opacity-80 border-none outline-none rounded-lg cursor-pointer"
+      >
+        {#each AURA_MODELS as model}
+          <option value={model}>
+            {model.name} ({model.sizeStr}) - min {model.minRam}GB RAM
+          </option>
+        {/each}
+      </select>
+    </div>
+
     <button
       class="w-fit inline-flex items-center gap-2 bg-white px-8 py-2.5 text-black text-[13px] transition hover:bg-gray-100 border-none"
       onclick={install}
@@ -122,6 +180,23 @@
             {$i18n.t('setup.install.mightTakeMinutes')}
           </div>
         {/if}
+      </div>
+    </div>
+
+  {:else if phase === 'downloading_model'}
+    <div class="flex flex-col items-center gap-5 py-10" in:fade={{ duration: 250 }}>
+      <img src={logoImage} class="size-12 rounded-full dark:invert animate-pulse" alt="logo" />
+      <div class="flex flex-col items-center gap-2 text-center w-full max-w-[240px]">
+        <div class="text-sm opacity-60">Downloading Model...</div>
+        <div class="text-[12px] opacity-40 font-mono mb-2">{selectedModel.name}</div>
+        
+        <div class="w-full h-[4px] bg-black/[0.06] dark:bg-white/[0.06] rounded-full overflow-hidden">
+          <div
+            class="h-full bg-emerald-400/70 rounded-full transition-[width] duration-300"
+            style="width: {downloadProgress ?? 0}%"
+          ></div>
+        </div>
+        <div class="text-[10px] opacity-30 mt-1">{(downloadProgress ?? 0).toFixed(1)}%</div>
       </div>
     </div>
 

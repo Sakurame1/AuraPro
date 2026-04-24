@@ -1,5 +1,5 @@
-appId: com.openwebui.desktop
-productName: Open WebUI
+appId: com.aurapro.desktop
+productName: AuraPro
 directories:
   buildResources: build
 files:
@@ -11,13 +11,15 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 extraResources:
-  - from: CHANGELOG.md
-    to: CHANGELOG.md
+  - from: 更新日志.txt
+    to: 更新日志.txt
+  - from: data
+    to: data
 asarUnpack:
   - resources/**
   - node_modules/node-pty/**
 win:
-  executableName: open-webui
+  executableName: aurapro
 nsis:
   artifactName: ${name}-setup.${ext}
   shortcutName: ${productName}
@@ -84,5 +86,5 @@ flatpak:
 npmRebuild: true
 publish:
   provider: github
-  owner: open-webui
+  owner: aurapro
   repo: desktop

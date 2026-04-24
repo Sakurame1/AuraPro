@@ -93,7 +93,7 @@ const detectBestVariant = (): string => {
       stdio: 'pipe'
     })
     // NVIDIA GPU detected
-    if (platform === 'win32') return 'cuda-12.4'
+    if (platform === 'win32') return 'cuda-13.1'
     // Linux: no CUDA asset currently available, fall through to other checks
   } catch {
     // nvidia-smi not available or no NVIDIA GPU
