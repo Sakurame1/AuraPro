@@ -428,7 +428,7 @@
 
     {#if showReveal}
       <div class="matrix-reveal">
-        <img src={logoImage} alt="Open WebUI" class="matrix-logo-img" />
+        <img src={logoImage} alt="AuraPro" class="matrix-logo-img" />
       </div>
     {/if}
   </div>
