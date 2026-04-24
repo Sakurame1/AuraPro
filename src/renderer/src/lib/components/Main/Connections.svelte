@@ -133,7 +133,8 @@
             options.selectedModel.filename,
             undefined,
             options.selectedModel.sizeBytes,
-            options.selectedModel.name,
+            options.selectedModel.filename,
+            options.selectedModel.filename.replace('.gguf', ''),
             'AuraPro'
           )
         } catch (e) {

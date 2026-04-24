@@ -123,11 +123,22 @@ export const downloadModel = async (
   token?: string,
   expectedSize?: number,
   saveAs?: string,
-  saveRepoAs?: string
+  saveRepoAs?: string,
+  subDir?: string
 ): Promise<string> => {
   const storageRepo = saveRepoAs || repo
   const slug = repoSlug(storageRepo)
-  const repoDir = path.join(getHfCacheDir(), slug)
+  
+  let repoDir: string
+  if (subDir === 'AuraPro') {
+    // Save directly to models/AuraPro
+    repoDir = path.join(getModelsDir(), 'AuraPro')
+  } else if (subDir) {
+    repoDir = path.join(getModelsDir(), subDir, slug)
+  } else {
+    repoDir = path.join(getHfCacheDir(), slug)
+  }
+  
   if (!fs.existsSync(repoDir)) {
     fs.mkdirSync(repoDir, { recursive: true })
   }

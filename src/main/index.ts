@@ -1893,7 +1893,7 @@ if (!gotTheLock) {
     ipcMain.handle('huggingface:repo:files', async (_event, repo: string, token?: string) => {
       return getRepoFiles(repo, token)
     })
-    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string, saveRepoAs?: string) => {
+    ipcMain.handle('huggingface:models:download', async (_event, repo: string, filename: string, token?: string, expectedSize?: number, saveAs?: string, saveRepoAs?: string, subDir?: string) => {
       try {
         const displayRepo = saveRepoAs || repo
         const displayFilename = saveAs || filename
@@ -1907,7 +1907,7 @@ if (!gotTheLock) {
             downloadedBytes: progress.downloadedBytes,
             totalBytes: progress.totalBytes
           })
-        }, token, expectedSize, saveAs, saveRepoAs)
+        }, token, expectedSize, saveAs, saveRepoAs, subDir)
         sendToRenderer('status:huggingface-download', { repo: displayRepo, filename: displayFilename, status: 'done', filepath })
         return filepath
       } catch (error) {

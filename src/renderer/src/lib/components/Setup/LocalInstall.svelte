@@ -87,7 +87,8 @@
         selectedModel.filename, 
         undefined, 
         selectedModel.sizeBytes, 
-        selectedModel.name,
+        selectedModel.filename,
+        selectedModel.filename.replace('.gguf', ''),
         'AuraPro'
       )
       
