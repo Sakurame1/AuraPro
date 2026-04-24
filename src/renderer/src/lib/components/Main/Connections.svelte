@@ -290,7 +290,7 @@
 
   const openGithub = () => {
     settingsOpen = false
-    window.electronAPI?.openInBrowser?.('https://github.com/open-webui/desktop')
+    window.electronAPI?.openInBrowser?.('https://github.com/Sakurame1/AuraPro/')
   }
 
   // ── Log panel PTY helpers ─────────────────────────────
@@ -578,7 +578,7 @@
           ? openTerminalStatus === 'started'
           : llamaCppStatus === 'started'}
       statusText={activeLog === 'server'
-        ? (serverStatus === 'starting' ? 'Starting Open WebUI…' : serverStatus === 'running' && !serverReachable ? 'Waiting for server…' : installStatus || '')
+        ? (serverStatus === 'starting' ? 'Starting AuraPro…' : serverStatus === 'running' && !serverReachable ? 'Waiting for server…' : installStatus || '')
         : activeLog === 'open-terminal'
           ? (openTerminalStatus === 'stopping' ? 'Stopping Open Terminal…' : openTerminalStatus === 'starting' ? 'Starting Open Terminal…' : '')
           : (llamaCppStatus === 'stopping' ? 'Stopping llama-server…' : llamaCppSetupStatus || (llamaCppStatus === 'starting' ? 'Starting llama-server…' : llamaCppStatus === 'setting-up' ? 'Setting up llama.cpp…' : ''))}

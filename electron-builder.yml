@@ -18,6 +18,8 @@ asarUnpack:
 win:
   executableName: aurapro
 nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
   artifactName: ${name}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}

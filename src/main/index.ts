@@ -649,7 +649,7 @@ const updateTray = () => {
 
   const trayMenuTemplate = [
     {
-      label: 'Show Open WebUI',
+      label: 'Show AuraPro',
       click: () => {
         mainWindow?.show()
         mainWindow?.focus()
@@ -675,7 +675,7 @@ const updateTray = () => {
         ]
       : []),
     {
-      label: 'Quit Open WebUI',
+      label: 'Quit AuraPro',
       accelerator: 'CommandOrControl+Q',
       click: async () => {
         await stopServerHandler()
@@ -951,10 +951,10 @@ const resetAppHandler = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await resetApp()
     CONFIG = await getConfig() // reload from defaults since config.json was deleted
-    new Notification({ title: 'Open WebUI', body: 'Application has been reset.' }).show()
+    new Notification({ title: 'AuraPro', body: 'Application has been reset.' }).show()
   } catch (error) {
     log.error('Failed to reset:', error)
-    new Notification({ title: 'Open WebUI', body: `Reset failed: ${error.message}` }).show()
+    new Notification({ title: 'AuraPro', body: `Reset failed: ${error.message}` }).show()
   }
 }
 
@@ -979,12 +979,12 @@ if (!gotTheLock) {
   })
 
   app.setAboutPanelOptions({
-    applicationName: 'Open WebUI',
+    applicationName: 'AuraPro',
     iconPath: icon,
     applicationVersion: app.getVersion(),
     version: app.getVersion(),
     website: 'https://openwebui.com',
-    copyright: `© ${new Date().getFullYear()} Open WebUI`
+    copyright: `© ${new Date().getFullYear()} AuraPro`
   })
 
   app.whenReady().then(async () => {
@@ -992,7 +992,7 @@ if (!gotTheLock) {
     loadSpotlightPosition()
     log.info('Config:', CONFIG)
 
-    app.name = 'Open WebUI'
+    app.name = 'AuraPro'
     if (process.platform === 'darwin' && app.dock) {
       app.dock.setIcon(icon)
     }
@@ -1071,7 +1071,7 @@ if (!gotTheLock) {
         const owuiVersion = CONFIG?.localServer?.version || undefined
         const otVersion = CONFIG?.openTerminal?.version || undefined
 
-        sendToRenderer('status:install', 'Installing Open WebUI…')
+        sendToRenderer('status:install', 'Installing AuraPro…')
         await installPackage('open-webui', owuiVersion, (status: string) => {
           sendToRenderer('status:install', status)
         })
@@ -1266,7 +1266,7 @@ if (!gotTheLock) {
               log.warn(`spotlight:captureRegion — screen recording permission: ${status}`)
               new Notification({
                 title: 'Screen Recording Permission Required',
-                body: 'Open WebUI needs Screen Recording access to capture screenshots. Please enable it in System Settings → Privacy & Security → Screen Recording, then restart the app.'
+                body: 'AuraPro needs Screen Recording access to capture screenshots. Please enable it in System Settings → Privacy & Security → Screen Recording, then restart the app.'
               }).show()
               // Open the correct System Preferences pane
               shell.openExternal(
@@ -1746,7 +1746,7 @@ if (!gotTheLock) {
     // Create tray
     const trayIcon = nativeImage.createFromPath(icon)
     tray = new Tray(trayIcon.resize({ width: 16, height: 16 }))
-    tray.setToolTip('Open WebUI')
+    tray.setToolTip('AuraPro')
     updateTray()
 
 

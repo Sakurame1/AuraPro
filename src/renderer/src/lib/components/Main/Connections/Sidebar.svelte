@@ -146,7 +146,7 @@
             class="text-[12px] {activeConnectionId === localConn.id
               ? 'font-medium opacity-100'
               : 'opacity-70'} transition-opacity truncate flex-1 min-w-0"
-            >{localConn.name ?? 'Open WebUI'}</span
+            >{localConn.name ?? 'AuraPro'}</span
           >
         {/if}
 
@@ -184,7 +184,7 @@
                   onclick={(e) => {
                     e.stopPropagation()
                     menuOpenId = null
-                    startRename(localConn.id, localConn.name ?? 'Open WebUI')
+                    startRename(localConn.id, localConn.name ?? 'AuraPro')
                   }}
                 >
                   <svg

@@ -176,7 +176,7 @@
   }
 
   const openGithub = () => {
-    window.electronAPI?.openInBrowser?.('https://github.com/open-webui/desktop')
+    window.electronAPI?.openInBrowser?.('https://github.com/Sakurame1/AuraPro/')
   }
 
   const handleCheck = async () => {
@@ -422,7 +422,7 @@
 
     {#if showReveal}
       <div class="matrix-reveal">
-        <img src={logoImage} alt="Open WebUI" class="matrix-logo-img" />
+        <img src={logoImage} alt="AuraPro" class="matrix-logo-img" />
       </div>
     {/if}
   </div>
