@@ -57,30 +57,38 @@
     defaultInstallDir = await window.electronAPI.getInstallDir()
     installDir = defaultInstallDir
 
-    // Detect NVIDIA GPU for Windows
-    if (platform === 'win32') {
-      try {
-        const gpuInfo = await (navigator as any).gpu?.requestAdapter()
-        const name = gpuInfo?.name?.toLowerCase() || ''
-        if (name.includes('nvidia') || name.includes('geforce') || name.includes('rtx')) {
+    // Improved Hardware Detection
+    try {
+      const sysInfo = await window.electronAPI.getSystemInfo()
+      const gpuName = sysInfo?.gpuName?.toLowerCase() || ''
+      const mem = sysInfo?.totalMemGB || 8
+
+      // Detect llama.cpp variant
+      if (platform === 'win32') {
+        if (gpuName.includes('nvidia') || gpuName.includes('geforce') || gpuName.includes('rtx')) {
           llamaCppVariant = 'cuda-13.1'
-        } else if (name.includes('amd') || name.includes('radeon') || name.includes('intel')) {
+        } else if (gpuName.includes('amd') || gpuName.includes('radeon') || gpuName.includes('intel')) {
           llamaCppVariant = 'vulkan'
+        } else {
+          llamaCppVariant = 'cpu'
         }
-      } catch {
-        // Fallback to CPU if detection fails
+      } else if (platform === 'darwin') {
+        llamaCppVariant = 'cpu' // Metal is built into CPU variant on Mac
+      } else {
         llamaCppVariant = 'cpu'
       }
-    } else if (platform === 'darwin') {
-      llamaCppVariant = 'cpu' // Metal is built into CPU variant on Mac
+
+      // Recommend model based on memory
+      if (mem >= 32) selectedModel = AURA_MODELS[3]
+      else if (mem >= 24) selectedModel = AURA_MODELS[2]
+      else if (mem >= 16) selectedModel = AURA_MODELS[1]
+      else selectedModel = AURA_MODELS[0]
+    } catch (err) {
+      console.error('Hardware detection failed:', err)
+      // Fallback to defaults
+      llamaCppVariant = 'cpu'
+      selectedModel = AURA_MODELS[0]
     }
-    
-    // Recommend model based on memory
-    const mem = (navigator as any).deviceMemory || 8
-    if (mem >= 32) selectedModel = AURA_MODELS[3]
-    else if (mem >= 24) selectedModel = AURA_MODELS[2]
-    else if (mem >= 16) selectedModel = AURA_MODELS[1]
-    else selectedModel = AURA_MODELS[0]
   })
 
   const changeInstallDir = async () => {

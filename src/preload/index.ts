@@ -57,6 +57,7 @@ const api = {
 
   // App
   getAppInfo: () => ipcRenderer.invoke('app:info'),
+  getSystemInfo: () => ipcRenderer.invoke('app:systemInfo'),
   getVersion: () => ipcRenderer.invoke('get:version'),
   resetApp: () => ipcRenderer.invoke('app:reset'),
   getDefaultDataPath: () => ipcRenderer.invoke('app:defaultDataPath'),

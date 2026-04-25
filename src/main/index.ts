@@ -51,6 +51,7 @@ import {
   stopAllServers,
   uninstallPython,
   validateRemoteUrl,
+  getSystemInfo,
   type AppConfig,
   type Connection
 } from './utils'
@@ -1129,8 +1130,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.0.5',
-    version: '2.0.5',
+    applicationVersion: '2.1.0',
+    version: '2.1.0',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1922,6 +1923,7 @@ if (!gotTheLock) {
     ipcMain.handle('package:uninstall', async (_event, packageName: string) => {
       return uninstallPackage(packageName)
     })
+    ipcMain.handle('app:systemInfo', () => getSystemInfo())
 
     ipcMain.handle('dialog:selectFolder', async () => {
       const result = await dialog.showOpenDialog(mainWindow!, {

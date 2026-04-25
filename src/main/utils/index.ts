@@ -108,10 +108,30 @@ export const openUrl = (url: string) => {
   shell.openExternal(url)
 }
 
-export const getSystemInfo = () => {
+export const getSystemInfo = async () => {
+  const totalMem = os.totalmem()
+  const totalMemGB = Math.round(totalMem / (1024 * 1024 * 1024))
+
+  let gpuName = ''
+  try {
+    if (process.platform === 'win32') {
+      const output = execSync('wmic path win32_VideoController get name', { encoding: 'utf-8' })
+      const lines = output.split('\r\n').map(l => l.trim()).filter(l => l && l !== 'Name')
+      gpuName = lines.join(', ')
+    } else if (process.platform === 'darwin') {
+      const output = execSync("system_profiler SPDisplaysDataType | grep 'Chipset Model'", { encoding: 'utf-8' })
+      const lines = output.split('\n').map(l => l.split(':')[1]?.trim()).filter(l => l)
+      gpuName = lines.join(', ')
+    }
+  } catch (e) {
+    log.warn('Failed to get GPU info via CLI:', e)
+  }
+
   return {
     platform: os.platform(),
-    architecture: os.arch()
+    architecture: os.arch(),
+    totalMemGB,
+    gpuName
   }
 }
 
