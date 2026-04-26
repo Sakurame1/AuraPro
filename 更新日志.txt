@@ -1,8 +1,12 @@
+AuraPro-2.2.1-2026-04-26
+修复MAC版本LOGO问题
+已知问题：Windos部分用户安装了Bitdefender会把安装后的文件当作病毒然后删除，导致无法使用。怀疑是Bitdefender的设置问题。
+
 AuraPro-2.2.0-2026-04-26
 新增两个额外模型。
 修改所有模型推荐配置。
 增加MAC 8G版本专用配置。
-已知问题：Windos部分用户安装的Bitdefender会把安装后的文件删除。怀疑是Bitdefender的设置问题。
+已知问题：Windos部分用户安装了Bitdefender会把安装后的文件当作病毒然后删除，导致无法使用。怀疑是Bitdefender的设置问题。
 
 AuraPro-2.1.0-2026-04-25
 优化硬件自动检测机制，更准确的识别推荐设置。
