@@ -1147,8 +1147,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.3.0',
-    version: '2.3.0',
+    applicationVersion: '2.3.1',
+    version: '2.3.1',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
