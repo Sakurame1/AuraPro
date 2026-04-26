@@ -14,12 +14,14 @@
   let defaultInstallDir = $state('')
 
   const AURA_MODELS = [
-    { name: 'low_E4.gguf', sizeStr: '~4GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, minRam: 8 },
-    { name: 'medium_Q2.gguf', sizeStr: '~9GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, minRam: 16 },
-    { name: 'medium-high_IQ4.gguf', sizeStr: '~12GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, minRam: 24 },
-    { name: 'high_Q4.gguf', sizeStr: '~15GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, minRam: 32 },
-    { name: 'super-high_Q5.gguf', sizeStr: '~18.5GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, minRam: 48 },
-    { name: 'high-code_IQ4.gguf', sizeStr: '~18.0GB', repo: 'AuraPro', hfRepo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, minRam: 32 }
+    { name: 'low_EQ4', sizeStr: '~4.7GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-IQ4_XS.gguf', sizeBytes: 4.72 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 12G+0G / UMA 8G' },
+    { name: 'low_E4', sizeStr: '~4GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q4_K_M.gguf', sizeBytes: 4 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 16G+0G / UMA 10G' },
+    { name: 'medium-low_Q6', sizeStr: '~7.1GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-E4B-it-GGUF', filename: 'gemma-4-E4B-it-Q6_K.gguf', sizeBytes: 7.07 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 24G+0G / UMA 12G' },
+    { name: 'medium_Q2', sizeStr: '~9GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ2_M.gguf', sizeBytes: 9 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 32G+0G / UMA 18G' },
+    { name: 'medium-high_IQ4', sizeStr: '~12GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-IQ4_XS.gguf', sizeBytes: 12 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 32G+6G / UMA 24G' },
+    { name: 'high_Q4', sizeStr: '~15GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q4_K_M.gguf', sizeBytes: 15 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 48G+6G / UMA 28G' },
+    { name: 'super-high_Q5', sizeStr: '~18.5GB', repo: 'AuraPro', hfRepo: 'unsloth/gemma-4-26B-A4B-it-GGUF', filename: 'gemma-4-26B-A4B-it-UD-Q5_K_M.gguf', sizeBytes: 18.5 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 64G+8G / UMA 32G' },
+    { name: 'high-code_IQ4', sizeStr: '~18.0GB', repo: 'AuraPro', hfRepo: 'unsloth/Qwen3.6-35B-A3B-GGUF', filename: 'Qwen3.6-35B-A3B-UD-IQ4_NL.gguf', sizeBytes: 18 * 1024 * 1024 * 1024, ramInfo: 'RAM+VRAM 32G+6G / UMA 32G' }
   ]
 
   let selectedModel = $state(AURA_MODELS[0])
@@ -70,9 +72,9 @@
     
     // Recommend model based on memory
     const mem = navigator.deviceMemory || 8
-    if (mem >= 32) selectedModel = AURA_MODELS[3]
-    else if (mem >= 24) selectedModel = AURA_MODELS[2]
-    else if (mem >= 16) selectedModel = AURA_MODELS[1]
+    if (mem >= 32) selectedModel = AURA_MODELS[6]
+    else if (mem >= 24) selectedModel = AURA_MODELS[4]
+    else if (mem >= 16) selectedModel = AURA_MODELS[3]
     else selectedModel = AURA_MODELS[0]
 
     window.electronAPI.onData((data: any) => {
@@ -130,6 +132,17 @@
   const startModelDownload = async () => {
     phase = 'model_downloading'
     try {
+      if (selectedModel.name === 'low_EQ4') {
+        const current = await window.electronAPI.getConfig()
+        const llamaCpp = { 
+          ...(current.llamaCpp || {}), 
+          ctxSize: 8192,
+          extraArgs: ['--parallel', '1', '-b', '512', '--ubatch-size', '256']
+        }
+        await window.electronAPI.setConfig({ llamaCpp })
+        config.set(await window.electronAPI.getConfig())
+      }
+
       await window.electronAPI.downloadHfModel(
         selectedModel.hfRepo, 
         selectedModel.filename, 
@@ -260,7 +273,7 @@
             >
               <div class="flex flex-col">
                 <span class="text-[13px] font-medium {selectedModel.name === model.name ? 'text-emerald-400' : 'opacity-80'}">{model.name}</span>
-                <span class="text-[10px] opacity-30">{model.sizeStr} · min {model.minRam}GB RAM</span>
+                <span class="text-[10px] opacity-30">{model.sizeStr} · {model.ramInfo}</span>
               </div>
               {#if selectedModel.name === model.name}
                 <div class="size-2 rounded-full bg-emerald-400"></div>

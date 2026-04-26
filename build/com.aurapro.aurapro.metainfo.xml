@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.aurapro.desktop</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+
+  <name>AuraPro</name>
+  <summary>AuraPro AI Desktop</summary>
+
+  <developer id="com.sakurame">
+    <name>Sakurame</name>
+  </developer>
+
+  <description>
+    <p>
+      AuraPro is a powerful, local-first AI translation and chat platform.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">com.aurapro.desktop</launchable>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">intense</content_attribute>
+  </content_rating>
+
+  <url type="bugtracker">https://github.com/Sakurame1/AuraPro/issues</url>
+  <url type="homepage">https://aurapro.com</url>
+  <url type="vcs-browser">https://github.com/Sakurame1/AuraPro</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/Sakurame1/AuraPro/main/demo.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="2.2.0" date="2026-04-26">
+      <url type="details">https://github.com/Sakurame1/AuraPro/releases/tag/v2.2.0</url>
+    </release>
+  </releases>
+</component>

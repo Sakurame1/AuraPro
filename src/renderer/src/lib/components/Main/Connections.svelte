@@ -138,6 +138,17 @@
       if (options?.selectedModel) {
         installStatus = `Downloading model: ${options.selectedModel.name}...`
         try {
+          if (options.selectedModel.name === 'low_EQ4') {
+            const current = await window.electronAPI.getConfig()
+            const llamaCpp = { 
+              ...(current.llamaCpp || {}), 
+              ctxSize: 8192,
+              extraArgs: ['--parallel', '1', '-b', '512', '--ubatch-size', '256']
+            }
+            await window.electronAPI.setConfig({ llamaCpp })
+            config.set(await window.electronAPI.getConfig())
+          }
+
           await window.electronAPI.downloadHfModel(
             options.selectedModel.hfRepo,
             options.selectedModel.filename,
