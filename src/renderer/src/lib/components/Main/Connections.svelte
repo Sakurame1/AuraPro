@@ -138,7 +138,7 @@
       if (options?.selectedModel) {
         installStatus = `Downloading model: ${options.selectedModel.name}...`
         try {
-          if (options.selectedModel.name === 'low_EQ4') {
+          if (options.selectedModel.name === 'low_EQ4.gguf') {
             const current = await window.electronAPI.getConfig()
             const llamaCpp = { 
               ...(current.llamaCpp || {}), 
