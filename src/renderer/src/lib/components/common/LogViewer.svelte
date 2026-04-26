@@ -65,6 +65,17 @@
       })
     }
 
+    // Enable Ctrl+C / Cmd+C copying
+    term.attachCustomKeyEventHandler((event) => {
+      const isCopy = (event.ctrlKey || event.metaKey) && event.key === 'c';
+      if (isCopy && term?.hasSelection()) {
+        const selection = term.getSelection();
+        navigator.clipboard.writeText(selection);
+        return false; // Prevent default
+      }
+      return true;
+    });
+
     connect((data: string) => {
       term?.write(data)
     })

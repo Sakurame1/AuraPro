@@ -408,7 +408,8 @@ function createVoiceInputWindow(): BrowserWindow {
   // Grant microphone permission for the voice input window
   voiceInputWindow.webContents.session.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
-      callback(permission === 'media')
+      const allowed = ['media', 'clipboard-read', 'clipboard-write']
+      callback(allowed.includes(permission))
     }
   )
 
@@ -732,11 +733,10 @@ function createContentWindow(url: string, connectionId: string): BrowserWindow {
     }
   })
 
-  // Enable media capture
   session
     .fromPartition(`persist:connection-${connectionId}`)
     .setPermissionRequestHandler((_webContents, permission, callback) => {
-      const allowedPermissions = ['media', 'mediaKeySystem', 'notifications']
+      const allowedPermissions = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write']
       callback(allowedPermissions.includes(permission))
     })
 
@@ -1127,8 +1127,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.2.5',
-    version: '2.2.5',
+    applicationVersion: '2.2.6',
+    version: '2.2.6',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1212,7 +1212,7 @@ if (!gotTheLock) {
       // Grant media / notification permissions for webview partition sessions
       // so that auth flows, media capture, and notifications work correctly.
       newSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-        const allowed = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read']
+        const allowed = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write']
         callback(allowed.includes(permission))
       })
     })
