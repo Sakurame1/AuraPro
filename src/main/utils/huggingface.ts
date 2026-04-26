@@ -57,7 +57,14 @@ const readManifest = (): HfModel[] => {
 }
 
 const writeManifest = (models: HfModel[]): void => {
-  fs.writeFileSync(getManifestPath(), JSON.stringify(models, null, 2))
+  const p = getManifestPath()
+  const tmp = p + '.tmp'
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(models, null, 2))
+    fs.renameSync(tmp, p)
+  } catch (e) {
+    log.error('[huggingface] Failed to write manifest:', e)
+  }
 }
 
 // ─── Public API ─────────────────────────────────────────
@@ -89,22 +96,69 @@ export const cancelDownload = (repo?: string, filename?: string): void => {
 
 /**
  * List all downloaded models.
+ * Combines manifest data with a real directory scan to ensure nothing is missed.
  */
 export const listModels = (): HfModel[] => {
   const manifest = readManifest()
   const installDir = getInstallDir()
-  // Filter out entries whose files no longer exist, resolving relative paths
-  return manifest.filter((m) => {
+  const cacheDir = getHfCacheDir()
+  
+  // 1. Start with manifest entries that actually exist
+  const existingInManifest = manifest.filter((m) => {
     const fullPath = path.isAbsolute(m.filepath) ? m.filepath : path.join(installDir, m.filepath)
     return fs.existsSync(fullPath)
   })
+
+  // 2. Scan the directory for any .gguf files not in manifest
+  // This handles models downloaded via other means or manifest corruption.
+  const foundModels: HfModel[] = [...existingInManifest]
+  const manifestFiles = new Set(existingInManifest.map(m => path.normalize(path.isAbsolute(m.filepath) ? m.filepath : path.join(installDir, m.filepath))))
+
+  try {
+    if (fs.existsSync(cacheDir)) {
+      const scanDir = (dir: string, currentRepo: string) => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true })
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name)
+          if (entry.isDirectory()) {
+            const nextRepo = currentRepo ? `${currentRepo}/${entry.name}` : entry.name
+            scanDir(fullPath, nextRepo)
+          } else if (entry.name.endsWith('.gguf')) {
+            const normalizedPath = path.normalize(fullPath)
+            if (!manifestFiles.has(normalizedPath)) {
+              // Not in manifest, add it
+              const repoName = currentRepo.replace(/--/g, '/') || 'Local'
+              foundModels.push({
+                repo: repoName,
+                filename: entry.name,
+                filepath: path.relative(installDir, fullPath),
+                size: fs.statSync(fullPath).size,
+                downloadedAt: new Date(fs.statSync(fullPath).mtime).toISOString()
+              })
+              manifestFiles.add(normalizedPath)
+            }
+          }
+        }
+      }
+      scanDir(cacheDir, '')
+    }
+  } catch (e) {
+    log.error('[huggingface] Error scanning models directory:', e)
+  }
+
+  // Sync manifest if we found new things or lost old ones
+  if (foundModels.length !== manifest.length) {
+    writeManifest(foundModels)
+  }
+
+  return foundModels
 }
 
 /**
  * Get the cache directory path (so runtimes can reference it).
  */
 export const getModelsDir = (): string => {
-  const dir = path.join(getInstallDir(), 'models')
+  const dir = path.join(getInstallDir(), 'models', 'huggingface')
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
   }
