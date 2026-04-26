@@ -1127,8 +1127,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.1.0',
-    version: '2.1.0',
+    applicationVersion: '2.2.4',
+    version: '2.2.4',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1267,16 +1267,18 @@ if (!gotTheLock) {
     // Python/uv
     ipcMain.handle('install:python', async () => {
       try {
+        log.info('Starting Python installation...')
         sendToRenderer('status:install', 'Downloading Python…')
         const res = await installPython(undefined, (status: string) => {
           sendToRenderer('status:install', status)
         })
         sendToRenderer('status:python', res)
         return res
-      } catch (error) {
+      } catch (error: any) {
+        log.error('Python installation IPC handler error:', error)
         sendToRenderer('status:python', false)
-        sendToRenderer('error', { message: error?.message ?? 'Python installation failed. Please check your internet connection and try again.' })
-        return false
+        // Re-throw so the renderer's promise rejects with the actual error message
+        throw new Error(error?.message ?? 'Python installation failed. Please check your internet connection and try again.')
       }
     })
 
@@ -1287,6 +1289,7 @@ if (!gotTheLock) {
     // Package
     ipcMain.handle('install:package', async () => {
       try {
+        log.info('Starting package installation...')
         CONFIG = await getConfig()
         const owuiVersion = CONFIG?.localServer?.version || undefined
         const otVersion = CONFIG?.openTerminal?.version || undefined
@@ -1317,10 +1320,10 @@ if (!gotTheLock) {
 
         sendToRenderer('status:package', true)
         return true
-      } catch (error) {
+      } catch (error: any) {
+        log.error('Package installation IPC handler error:', error)
         sendToRenderer('status:package', false)
-        sendToRenderer('error', { message: error?.message ?? 'Package installation failed. Please check your internet connection and try again.' })
-        return false
+        throw new Error(error?.message ?? 'Package installation failed. Please check your internet connection and try again.')
       }
     })
 

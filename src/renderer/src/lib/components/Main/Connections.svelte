@@ -103,8 +103,7 @@
       // Ensure Python and uv are installed before attempting package install
       const pythonReady = await window.electronAPI.getPythonStatus()
       if (!pythonReady) {
-        const pythonOk = await window.electronAPI.installPython()
-        if (!pythonOk) throw new Error('Failed to install Python. Please try again.')
+        await window.electronAPI.installPython()
       }
 
       const ok = await window.electronAPI.installPackage()

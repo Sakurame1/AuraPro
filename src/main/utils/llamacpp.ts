@@ -86,8 +86,20 @@ const detectBestVariant = (): string => {
   // macOS: Metal is baked into the macOS binary; no variant choice needed.
   if (platform === 'darwin') return 'cpu'
 
-  // Check for NVIDIA GPU (CUDA)
+  // 1. Check for NVIDIA GPU (CUDA)
   if (platform === 'win32') {
+    // Try wmic first as it's very reliable for identifying the hardware
+    try {
+      const { execSync } = require('child_process')
+      const output = execSync('wmic path win32_VideoController get name', { encoding: 'utf-8' })
+      if (output.toLowerCase().includes('nvidia')) {
+        log.info('NVIDIA GPU detected via wmic')
+        return 'cuda-13.1'
+      }
+    } catch {
+      // fallback to nvidia-smi
+    }
+
     const nvidiaSmiPaths = [
       'nvidia-smi',
       path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'nvidia-smi.exe'),
@@ -118,17 +130,26 @@ const detectBestVariant = (): string => {
     }
   }
 
-  // Check for Vulkan support (default for other GPUs on Windows)
+  // 2. Check for Vulkan support
+  if (platform === 'win32') {
+    // On Windows, checking for the presence of the Vulkan loader DLL is very reliable
+    const system32 = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32')
+    if (fs.existsSync(path.join(system32, 'vulkan-1.dll'))) {
+      log.info('Vulkan loader (vulkan-1.dll) detected in System32')
+      return 'vulkan'
+    }
+  }
+
   try {
     const vulkanCmd = platform === 'win32' ? 'vulkaninfo' : 'vulkaninfo'
     execFileSync(vulkanCmd, ['--summary'], { timeout: 2000, stdio: 'pipe' })
-    log.info('Vulkan support detected')
+    log.info('Vulkan support detected via vulkaninfo')
     return 'vulkan'
   } catch {
     // Vulkan not available
   }
 
-  // Linux: check for ROCm (AMD GPU)
+  // 3. Linux: check for ROCm (AMD GPU)
   if (platform === 'linux') {
     try {
       if (fs.existsSync('/opt/rocm') || fs.existsSync('/usr/lib/rocm')) {

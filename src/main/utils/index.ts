@@ -302,23 +302,38 @@ export const installPython = async (installationDir?: string, onStatus?: (status
     })
   }
   if (!fs.existsSync(pythonDownloadPath)) {
-    log.error('Python download not found')
-    return false
+    log.error('Python download not found after download attempt')
+    throw new Error('Python download failed. The downloaded file was not found on disk. Please check your disk space and permissions.')
   }
 
   installationDir = installationDir || getPythonInstallationDir()
-  log.info(installationDir, pythonDownloadPath)
+  log.info('Installing Python to:', installationDir)
 
   try {
+    // Ensure no servers are running that might lock files in the python dir
+    await stopAllServers()
+    
+    // If the directory already exists, try to remove it for a clean install
+    // (especially important on Windows if files are corrupted or partial)
+    if (fs.existsSync(installationDir)) {
+      log.info('Removing existing Python directory for clean installation')
+      try {
+        fs.rmSync(installationDir, { recursive: true, force: true })
+      } catch (e) {
+        log.warn('Failed to remove existing Python directory:', e)
+        // Continue anyway, tar.x might still work or fail with a better error
+      }
+    }
+
     onStatus?.('Extracting Python…')
     const installBase = getInstallDir()
     await tar.x({ cwd: installBase, file: pythonDownloadPath })
-  } catch (error) {
-    log.error(error)
+  } catch (error: any) {
+    log.error('Extraction failed:', error)
     // Remove possibly-corrupted download so next retry re-downloads
     try { fs.unlinkSync(pythonDownloadPath) } catch {}
     throw new Error(
-      'Failed to extract Python. The download may be corrupted. Please try again.'
+      `Failed to extract Python: ${error?.message || 'unknown error'}. The download may be corrupted or files may be locked. Please restart the app and try again.`
     )
   }
 
@@ -332,6 +347,22 @@ export const installPython = async (installationDir?: string, onStatus?: (status
   try {
     onStatus?.('Installing uv package manager…')
     const pythonPath = getPythonPath(installationDir)
+    
+    // First, ensure pip is available (standalone builds might not have it initialized)
+    log.info('Ensuring pip is available...')
+    try {
+      await new Promise<void>((resolve, reject) => {
+        execFile(pythonPath, ['-m', 'ensurepip', '--upgrade'], { env: { ...process.env, PYTHONIOENCODING: 'utf-8' } }, (error) => {
+          if (error) reject(error)
+          else resolve()
+        })
+      })
+      log.info('ensurepip completed')
+    } catch (e) {
+      log.warn('ensurepip failed (this is often okay if pip is already present):', e)
+    }
+
+    log.info('Installing uv via pip...')
     await new Promise<void>((resolve, reject) => {
       execFile(
         pythonPath,
@@ -343,18 +374,22 @@ export const installPython = async (installationDir?: string, onStatus?: (status
             ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
           }
         },
-        (error) => {
-          if (error) reject(error)
-          else resolve()
+        (error, stdout, stderr) => {
+          if (error) {
+            log.error('pip install uv failed:', stderr)
+            reject(new Error(stderr || error.message))
+          } else {
+            resolve()
+          }
         }
       )
     })
     log.info('Successfully installed uv package')
     return true
-  } catch (error) {
+  } catch (error: any) {
     log.error('Failed to install uv:', error)
     throw new Error(
-      `Failed to install the uv package manager: ${error?.message || 'unknown error'}`
+      `Failed to install the uv package manager: ${error?.message || 'unknown error'}. Please check your internet connection.`
     )
   }
 }
@@ -882,7 +917,7 @@ const DEFAULT_CONFIG: AppConfig = {
   llamaCpp: {
     enabled: false,
     version: 'latest',
-    variant: 'cpu',
+    variant: 'auto',
     extraArgs: []
   },
   envVars: {},
