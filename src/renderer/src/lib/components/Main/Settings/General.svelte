@@ -148,6 +148,34 @@
     }
   })
 
+  // Shortcut actions state
+  let spotlightAction = $state<string | null>(null)
+  let voiceAction = $state<string | null>(null)
+  let callAction = $state<string | null>(null)
+
+  $effect(() => {
+    if ($config?.shortcutActions) {
+      spotlightAction = $config.shortcutActions.spotlight
+      voiceAction = $config.shortcutActions.voice
+      callAction = $config.shortcutActions.call
+    }
+  })
+
+  const saveShortcutAction = async (type: 'spotlight' | 'voice' | 'call', action: string | null) => {
+    const currentActions = $config?.shortcutActions || { spotlight: null, voice: null, call: null }
+    const actions = { ...currentActions, [type]: action === 'none' ? null : action }
+    await window.electronAPI.setConfig({ shortcutActions: actions })
+    config.set(await window.electronAPI.getConfig())
+  }
+
+  const shortcutActions = [
+    { id: 'none', label: 'settings.general.shortcutActionNone' },
+    { id: 'translation', label: 'settings.general.shortcutActionTranslation' },
+    { id: 'simultaneous', label: 'settings.general.shortcutActionSimultaneous' },
+    { id: 'learning', label: 'settings.general.shortcutActionLearning' },
+    { id: 'code_interpreter', label: 'settings.general.shortcutActionCodeInterpreter' }
+  ]
+
   const keyToElectron = (e: KeyboardEvent): string | null => {
     const parts: string[] = []
     if (e.metaKey || e.ctrlKey) parts.push('CommandOrControl')
@@ -524,6 +552,23 @@
     </div>
   </div>
 
+  <div class="py-4 flex items-center justify-between pl-4 opacity-80">
+    <div>
+      <div class="text-[12px] opacity-70">{$i18n.t('settings.general.shortcutAction')}</div>
+      <div class="text-[11px] opacity-25 mt-0.5">{$i18n.t('settings.general.shortcutActionDesc')}</div>
+    </div>
+    <select
+      class="bg-black/[0.04] dark:bg-white/[0.06] text-[11px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60"
+      onchange={(e) => saveShortcutAction('spotlight', (e.target as HTMLSelectElement).value)}
+    >
+      {#each shortcutActions as action}
+        <option value={action.id} selected={spotlightAction === action.id || (action.id === 'none' && !spotlightAction)}>
+          {$i18n.t(action.label)}
+        </option>
+      {/each}
+    </select>
+  </div>
+
   <div class="py-4 flex items-center justify-between">
     <div>
       <div class="text-[13px] opacity-70">Clipboard Auto-Paste</div>
@@ -610,6 +655,23 @@
       {/if}
     </div>
   </div>
+
+  <div class="py-4 flex items-center justify-between pl-4 opacity-80">
+    <div>
+      <div class="text-[12px] opacity-70">{$i18n.t('settings.general.shortcutAction')}</div>
+      <div class="text-[11px] opacity-25 mt-0.5">{$i18n.t('settings.general.shortcutActionDesc')}</div>
+    </div>
+    <select
+      class="bg-black/[0.04] dark:bg-white/[0.06] text-[11px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60"
+      onchange={(e) => saveShortcutAction('voice', (e.target as HTMLSelectElement).value)}
+    >
+      {#each shortcutActions as action}
+        <option value={action.id} selected={voiceAction === action.id || (action.id === 'none' && !voiceAction)}>
+          {$i18n.t(action.label)}
+        </option>
+      {/each}
+    </select>
+  </div>
   {/if}
 
   <div class="py-4 flex items-center justify-between">
@@ -681,6 +743,23 @@
         </button>
       {/if}
     </div>
+  </div>
+
+  <div class="py-4 flex items-center justify-between pl-4 opacity-80">
+    <div>
+      <div class="text-[12px] opacity-70">{$i18n.t('settings.general.shortcutAction')}</div>
+      <div class="text-[11px] opacity-25 mt-0.5">{$i18n.t('settings.general.shortcutActionDesc')}</div>
+    </div>
+    <select
+      class="bg-black/[0.04] dark:bg-white/[0.06] text-[11px] text-[#1d1d1f] dark:text-[#fafafa] px-3 py-1.5 border-none outline-none rounded-xl opacity-60"
+      onchange={(e) => saveShortcutAction('call', (e.target as HTMLSelectElement).value)}
+    >
+      {#each shortcutActions as action}
+        <option value={action.id} selected={callAction === action.id || (action.id === 'none' && !callAction)}>
+          {$i18n.t(action.label)}
+        </option>
+      {/each}
+    </select>
   </div>
   {/if}
 

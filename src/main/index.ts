@@ -99,6 +99,10 @@ import { existsSync, writeFileSync, unlinkSync } from 'fs'
 
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('no-sandbox')
+  
+  // 解决 AppImage 和其他容器化产品中 /dev/shm 访问失败的问题
+  // 此标志告诉 Chromium 使用 /tmp 作为共享内存，避免由于 FUSE 挂载限制导致的崩溃
+  app.commandLine.appendSwitch('disable-dev-shm-usage')
 
   // Use the native Wayland backend when available instead of XWayland.
   // This is required for xdg-desktop-portal features like GlobalShortcuts
@@ -233,6 +237,12 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
       const text = CONFIG?.spotlightClipboardPaste !== false
         ? (clipboard.readText()?.trim() || '')
         : ''
+      
+      // Trigger optional action if configured
+      if (CONFIG?.shortcutActions?.spotlight) {
+        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.spotlight })
+      }
+      
       toggleSpotlight(text)
     })
   }
@@ -240,6 +250,10 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
   // Voice input shortcut – toggle microphone recording
   if (voiceInputAccel && CONFIG?.voiceInputEnabled !== false) {
     tryRegisterShortcut(voiceInputAccel, 'Voice Input', () => {
+      // Trigger optional action if configured
+      if (CONFIG?.shortcutActions?.voice) {
+        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.voice })
+      }
       toggleVoiceInput()
     })
   } else {
@@ -249,6 +263,10 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
   // Call shortcut – open the voice/video call overlay
   if (callAccel && CONFIG?.callEnabled !== false) {
     tryRegisterShortcut(callAccel, 'Call', () => {
+      // Trigger optional action if configured
+      if (CONFIG?.shortcutActions?.call) {
+        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.call })
+      }
       toggleCall()
     })
   } else {
@@ -1129,8 +1147,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.2.6',
-    version: '2.2.6',
+    applicationVersion: '2.3.0',
+    version: '2.3.0',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })

@@ -259,7 +259,27 @@
       observer.observe(target, { childList: true, subtree: true })
     }
 
-    return () => observer.disconnect()
+    const actionHandler = (e: any) => {
+      const payload = e.detail
+      if (!payload?.action) return
+
+      // Find active webview and send event
+      const container = document.querySelector('.content-webview-container')
+      if (container) {
+        const wv = container.querySelector(
+          `webview[partition="persist:connection-${activeConnectionId}"]`
+        ) as any
+        if (wv?.send) {
+          wv.send('desktop:event', { type: 'action:activate', data: { action: payload.action } })
+        }
+      }
+    }
+    window.addEventListener('action:trigger', actionHandler)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('action:trigger', actionHandler)
+    }
   })
 </script>
 

@@ -11,6 +11,9 @@ type EventCallback = (data: any) => void
 const eventCallbacks: EventCallback[] = []
 
 // Embedder → Guest (push events from desktop)
+// Supported events:
+// - theme:update { theme: 'light'|'dark'|'system' }
+// - action:activate { action: string } (triggered by global shortcuts)
 ipcRenderer.on('desktop:event', (_event, data) => {
   eventCallbacks.forEach((cb) => cb(data))
 })

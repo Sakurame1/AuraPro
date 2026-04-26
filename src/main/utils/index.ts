@@ -893,6 +893,11 @@ export interface AppConfig {
   callEnabled: boolean
   windowBounds: { x: number; y: number; width: number; height: number } | null
   windowMaximized: boolean
+  shortcutActions: {
+    spotlight: string | null
+    voice: string | null
+    call: string | null
+  }
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -929,7 +934,12 @@ const DEFAULT_CONFIG: AppConfig = {
   callShortcut: 'Shift+CommandOrControl+C',
   callEnabled: true,
   windowBounds: null,
-  windowMaximized: false
+  windowMaximized: false,
+  shortcutActions: {
+    spotlight: null,
+    voice: null,
+    call: null
+  }
 }
 
 export const getConfig = async (): Promise<AppConfig> => {
