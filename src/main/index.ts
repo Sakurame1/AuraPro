@@ -408,7 +408,8 @@ function createVoiceInputWindow(): BrowserWindow {
   // Grant microphone permission for the voice input window
   voiceInputWindow.webContents.session.setPermissionRequestHandler(
     (_webContents, permission, callback) => {
-      const allowed = ['media', 'clipboard-read', 'clipboard-write']
+      const allowed = ['media', 'clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']
+      log.info(`[voiceInput] Permission requested: ${permission}, allowed: ${allowed.includes(permission)}`)
       callback(allowed.includes(permission))
     }
   )
@@ -736,7 +737,8 @@ function createContentWindow(url: string, connectionId: string): BrowserWindow {
   session
     .fromPartition(`persist:connection-${connectionId}`)
     .setPermissionRequestHandler((_webContents, permission, callback) => {
-      const allowedPermissions = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write']
+      const allowedPermissions = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']
+      log.info(`[connection:${connectionId}] Permission requested: ${permission}, allowed: ${allowedPermissions.includes(permission)}`)
       callback(allowedPermissions.includes(permission))
     })
 
@@ -1212,7 +1214,8 @@ if (!gotTheLock) {
       // Grant media / notification permissions for webview partition sessions
       // so that auth flows, media capture, and notifications work correctly.
       newSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-        const allowed = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write']
+        const allowed = ['media', 'mediaKeySystem', 'notifications', 'clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']
+        log.info(`[session] Permission requested: ${permission}, allowed: ${allowed.includes(permission)}`)
         callback(allowed.includes(permission))
       })
     })
@@ -1433,6 +1436,15 @@ if (!gotTheLock) {
     ipcMain.handle('app:setAuthToken', (_event, token: string) => {
       AUTH_TOKEN = token || null
       log.info('Auth token updated from webview')
+    })
+
+    // Direct clipboard write (fallback for webview restrictions)
+    ipcMain.handle('app:copyToClipboard', (_event, text: string) => {
+      if (typeof text === 'string') {
+        clipboard.writeText(text)
+        return true
+      }
+      return false
     })
 
     // Misc

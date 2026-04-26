@@ -15,13 +15,31 @@ ipcRenderer.on('desktop:event', (_event, data) => {
   eventCallbacks.forEach((cb) => cb(data))
 })
 
-// ─── Theme Sync: Open WebUI → Desktop ───────────────────
-// Open WebUI calls window.applyTheme() after every theme change.
-// We inject this hook so the desktop shell can mirror the theme.
 contextBridge.exposeInMainWorld('applyTheme', () => {
   const theme = localStorage.getItem('theme') ?? 'system'
   ipcRenderer.sendToHost('webview:event', { type: 'theme:update', data: { theme } })
 })
+
+// Override navigator.clipboard.writeText to ensure it works in Electron webview
+try {
+  if (navigator.clipboard) {
+    const originalWriteText = navigator.clipboard.writeText.bind(navigator.clipboard)
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+      value: async (text: string) => {
+        try {
+          await originalWriteText(text)
+        } catch (err) {
+          // Fallback to desktop shell IPC if standard write fails (common in webview)
+          ipcRenderer.sendToHost('webview:send', { type: 'copyToClipboard', text })
+        }
+      },
+      configurable: true,
+      writable: true
+    })
+  }
+} catch (e) {
+  console.error('Failed to override clipboard API:', e)
+}
 
 // Expose to the Open WebUI page via contextBridge (secure, unforgeable)
 contextBridge.exposeInMainWorld('electronAPI', {

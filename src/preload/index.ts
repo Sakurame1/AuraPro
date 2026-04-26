@@ -186,7 +186,13 @@ const api = {
   getChangelog: () => ipcRenderer.invoke('app:changelog'),
 
   // Auth token relay from webview
-  setAuthToken: (token: string) => ipcRenderer.invoke('app:setAuthToken', token)
+  setAuthToken: (token: string) => ipcRenderer.invoke('app:setAuthToken', token),
+
+  // Clipboard
+  copyToClipboard: (data: string | { text: string }) => {
+    const text = typeof data === 'string' ? data : data.text
+    return ipcRenderer.invoke('app:copyToClipboard', text)
+  }
 }
 
 if (process.contextIsolated) {
