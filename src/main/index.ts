@@ -22,10 +22,7 @@ import { readFile, statfs } from 'fs/promises'
 
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
-if (app.isPackaged) {
-  const portableDataPath = join(path.dirname(process.execPath), 'AuraProData')
-  app.setPath('userData', portableDataPath)
-}
+// Use default system userData path to ensure persistence across updates
 
 import {
   getLogFilePath,
