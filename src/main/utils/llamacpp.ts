@@ -137,16 +137,10 @@ const ensureCudaRuntime = async (
     log.info('CUDA Toolkit silent install completed')
   } catch (error) {
     log.error('CUDA Toolkit silent install failed:', error)
-    // Try a more permissive install with the full runtime
-    try {
-      log.info('Retrying CUDA install with full runtime…')
-      await execAsync(`"${installerPath}" -s -n`, {
-        timeout: 900000, // 15 minutes for full install
-        windowsHide: true
-      })
-      log.info('CUDA Toolkit full silent install completed')
-    } catch (retryError) {
-      log.error('CUDA Toolkit full install also failed:', retryError)
+    // The installer sometimes returns a non-zero exit code even when successful (e.g. reboot required)
+    if (isCudaRuntimeInstalled()) {
+      log.info('CUDA Toolkit actually installed successfully despite the error code.')
+    } else {
       throw new Error(
         'Failed to install CUDA Toolkit automatically. ' +
         'Please install CUDA Toolkit manually from https://developer.nvidia.com/cuda-downloads ' +
