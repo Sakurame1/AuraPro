@@ -107,43 +107,39 @@ ipcRenderer.on('desktop:event', (_event, data) => {
       console.log(`[AuraPro] Found extension element for: ${targetAction}`)
 
       // Find the toggle switch associated with this label
-      // Walk up to find the row/container, then find the switch within it
       const findToggle = (el: HTMLElement): HTMLElement | null => {
-        // Check increasingly broader parent containers
+        // Stricter search: only look for actual switch elements (role="switch" or checkbox)
+        // Go up a maximum of 3 levels to avoid catching switches from neighboring items
         let current: HTMLElement | null = el
-        for (let depth = 0; depth < 5 && current; depth++) {
-          const row = current.closest('[class*="flex"], [class*="item"], [class*="row"], [class*="option"]') as HTMLElement
-          if (row) {
-            // Look for a switch/checkbox/toggle within this row
-            const toggle = row.querySelector(
-              'button[role="switch"], input[type="checkbox"], [class*="toggle"], [class*="switch"]'
-            ) as HTMLElement
-            if (toggle) return toggle
+        for (let depth = 0; depth < 4 && current; depth++) {
+          // Is the current element itself a switch?
+          if (current.matches('button[role="switch"], input[type="checkbox"]')) {
+            return current
           }
+          // Does the current element contain a switch?
+          const toggle = current.querySelector('button[role="switch"], input[type="checkbox"]') as HTMLElement
+          if (toggle) return toggle
+          
           current = current.parentElement
         }
         return null
       }
 
-      // Activate the target and deactivate others
-      for (const [key, labels] of Object.entries(actionLabels)) {
-        const el = findByLabels(labels)
-        if (!el) continue
-
-        const toggle = findToggle(el)
-        if (!toggle) continue
-
+      const toggle = findToggle(targetEl)
+      if (toggle) {
         const isChecked = toggle.getAttribute('aria-checked') === 'true' 
           || (toggle as HTMLInputElement).checked === true
           || toggle.classList.contains('active')
-          || toggle.classList.contains('checked')
-        const shouldBeChecked = key === targetAction
+          || toggle.classList.contains('bg-primary')
 
-        if (isChecked !== shouldBeChecked) {
-          console.log(`[AuraPro] ${shouldBeChecked ? 'Enabling' : 'Disabling'}: ${key}`)
+        if (!isChecked) {
+          console.log(`[AuraPro] Enabling target extension: ${targetAction}`)
           toggle.click()
-          await new Promise(r => setTimeout(r, 100))
+        } else {
+          console.log(`[AuraPro] Target extension already enabled: ${targetAction}`)
         }
+      } else {
+        console.warn(`[AuraPro] Found label for ${targetAction} but could not find its switch/checkbox.`)
       }
 
       console.log(`[AuraPro] Extension activation complete for: ${targetAction}`)
