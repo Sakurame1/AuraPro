@@ -42,8 +42,12 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       arch: x64
+                    - os: ubuntu-24.04-arm
+                      arch: arm64
                     - os: windows-latest
                       arch: x64
+                    - os: windows-11-arm
+                      arch: arm64
                     - os: macos-latest
                       arch: x64
                     - os: macos-latest
@@ -264,6 +268,48 @@ jobs:
                   else
                     echo "Skipping merge — need both $X64_YML and $ARM_YML"
                     ls -la macos-latest-*/latest-mac.yml 2>/dev/null || true
+                  fi
+
+            - name: Merge Windows latest.yml (x64 + arm64)
+              run: |
+                  X64_YML="windows-latest-x64/latest.yml"
+                  ARM_YML="windows-11-arm-arm64/latest.yml"
+
+                  if [ -f "$X64_YML" ] && [ -f "$ARM_YML" ]; then
+                    echo "Merging latest.yml from both architectures"
+                    npm install --no-save js-yaml
+                    node -e "
+                      const fs = require('fs');
+                      const yaml = require('js-yaml');
+                      const x64 = yaml.load(fs.readFileSync('$X64_YML', 'utf8'));
+                      const arm = yaml.load(fs.readFileSync('$ARM_YML', 'utf8'));
+                      x64.files = [...(x64.files || []), ...(arm.files || [])];
+                      const out = yaml.dump(x64, { lineWidth: -1 });
+                      fs.writeFileSync('$X64_YML', out);
+                      console.log(out);
+                    "
+                    rm -f "$ARM_YML"
+                  fi
+
+            - name: Merge Linux latest-linux.yml (x64 + arm64)
+              run: |
+                  X64_YML="ubuntu-latest-x64/latest-linux.yml"
+                  ARM_YML="ubuntu-24.04-arm-arm64/latest-linux.yml"
+
+                  if [ -f "$X64_YML" ] && [ -f "$ARM_YML" ]; then
+                    echo "Merging latest-linux.yml from both architectures"
+                    npm install --no-save js-yaml
+                    node -e "
+                      const fs = require('fs');
+                      const yaml = require('js-yaml');
+                      const x64 = yaml.load(fs.readFileSync('$X64_YML', 'utf8'));
+                      const arm = yaml.load(fs.readFileSync('$ARM_YML', 'utf8'));
+                      x64.files = [...(x64.files || []), ...(arm.files || [])];
+                      const out = yaml.dump(x64, { lineWidth: -1 });
+                      fs.writeFileSync('$X64_YML', out);
+                      console.log(out);
+                    "
+                    rm -f "$ARM_YML"
                   fi
 
             - name: Create Release

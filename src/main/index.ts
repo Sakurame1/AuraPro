@@ -109,13 +109,13 @@ if (process.platform === 'linux') {
   // to work (the portal is enabled by default in Chromium 134+ / Electron 33+).
   app.commandLine.appendSwitch('ozone-platform-hint', 'auto')
 
-  // Disable GPU compositing to prevent grey/blank webview rendering on
+  // Disable GPU entirely to prevent shared memory crash and grey screen on
   // Linux systems with problematic Intel/NVIDIA drivers or certain Wayland
-  // compositors.  The GPU process may not crash (so the crash-recovery
-  // marker never fires), but the compositor can fail silently — producing
-  // a grey rectangle instead of rendered content.  This is the standard
-  // workaround used by VS Code and other Electron apps (#119).
-  app.commandLine.appendSwitch('disable-gpu-compositing')
+  // compositors.  The GPU process crashes during shared memory allocation
+  // in /tmp even with --disable-dev-shm-usage, and disabling compositing
+  // alone still leaves the GPU process running. --disable-gpu prevents
+  // the process from spawning entirely, resolving both the crash and grey screen.
+  app.commandLine.appendSwitch('disable-gpu')
 }
 
 // ─── GPU Crash Recovery ─────────────────────────────────
@@ -322,18 +322,10 @@ function createSpotlightWindow(): BrowserWindow {
   spotlightWindow.on('blur', () => {
     if (blurArmed) {
       spotlightWindow?.hide()
-      // Restore main window when spotlight dismisses
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.show()
-      }
     }
   })
 
   spotlightWindow.on('closed', () => {
-    // Restore main window if spotlight is closed
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.show()
-    }
     spotlightWindow = null
   })
 

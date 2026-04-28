@@ -18,8 +18,10 @@ AuraPro is a powerful, local-first AI translation and chat platform. Run models 
 |----------|-----------|
 | macOS (Apple Silicon) | [**Download .dmg**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-arm64.dmg) |
 | macOS (Intel) | [**Download .dmg**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-x64.dmg) |
-| Windows x64 | [**Download .exe**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-setup.exe) |
-| Linux (AppImage) | [**Download .AppImage**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro.AppImage) |
+| Windows x64 | [**Download .exe**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-x64-setup.exe) |
+| Windows ARM64 | [**Download .exe**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-arm64-setup.exe) |
+| Linux x64 (AppImage) | [**Download .AppImage**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-x64.AppImage) |
+| Linux ARM64 (AppImage) | [**Download .AppImage**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro-arm64.AppImage) |
 | Linux (Debian/Ubuntu) | [**Download .deb**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro_amd64.deb) |
 | Linux (Snap) | [**Download .snap**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro_amd64.snap) |
 | Linux (Flatpak) | [**Download .flatpak**](https://github.com/Sakurame1/AuraPro/releases/latest/download/aurapro.flatpak) |
