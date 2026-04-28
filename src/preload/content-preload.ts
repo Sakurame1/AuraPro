@@ -139,8 +139,10 @@ ipcRenderer.on('desktop:event', (_event, data) => {
         }
 
         const isChecked = toggle.getAttribute('aria-checked') === 'true' 
+          || toggle.getAttribute('data-state') === 'checked'
           || (toggle as HTMLInputElement).checked === true
           || toggle.classList.contains('active')
+          || toggle.classList.contains('checked')
           || toggle.classList.contains('bg-primary')
 
         const shouldBeChecked = key === targetAction
