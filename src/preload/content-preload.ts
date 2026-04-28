@@ -20,84 +20,137 @@ ipcRenderer.on('desktop:event', (_event, data) => {
   // Auto-toggle Open WebUI tools/extensions when shortcut actions are triggered.
   // This interacts directly with the DOM since Open WebUI's extensions are UI-driven.
   if (data?.type === 'action:activate' && data.data?.action) {
-    const actionMap: Record<string, string> = {
-      'translation': '翻译模式',
-      'simultaneous': '同传模式',
-      'learning': '学习模式',
-      'code_interpreter': '代码解释器'
+    const actionLabels: Record<string, string[]> = {
+      'translation': ['翻译模式', 'Translation Mode', 'translation'],
+      'simultaneous': ['同传模式', '同声传译', 'Simultaneous Mode', 'simultaneous'],
+      'learning': ['学习模式', 'Learning Mode', 'learning'],
+      'code_interpreter': ['代码解释器', 'Code Interpreter', 'code_interpreter']
     }
     
     const targetAction = data.data.action
-    const targetText = actionMap[targetAction]
+    const targetLabels = actionLabels[targetAction]
     
-    if (targetText) {
-      setTimeout(async () => {
-        const findTextNode = (text: string): HTMLElement | null => {
-          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null)
-          let node: Node | null
-          while ((node = walker.nextNode())) {
-            if (node.nodeValue?.trim() === text) {
-              return node.parentElement
-            }
-          }
-          return null
-        }
-
-        let el = findTextNode(targetText)
-        let openedMenuBtn: HTMLButtonElement | null = null
-
-        // If not found, try to open the '+' tools menu near the chat input
-        if (!el) {
-          const textarea = document.querySelector('textarea#chat-input') || document.querySelector('textarea')
-          if (textarea) {
-            const container = textarea.closest('form') || textarea.parentElement?.parentElement
-            if (container) {
-              const buttons = Array.from(container.querySelectorAll('button'))
-              for (const btn of buttons) {
-                btn.click()
-                await new Promise((r) => setTimeout(r, 150)) // Wait for menu animation
-                el = findTextNode(targetText)
-                if (el) {
-                  openedMenuBtn = btn
-                  break
-                }
-                // Wrong menu, click again to close
-                btn.click()
-                await new Promise((r) => setTimeout(r, 50))
-              }
-            }
-          }
-        }
-
-        if (el) {
-          // Sync all known extension toggles (turn target ON, others OFF)
-          for (const [key, text] of Object.entries(actionMap)) {
-            const currentEl = findTextNode(text)
-            if (currentEl) {
-              const row = currentEl.closest('.flex') || currentEl.parentElement?.parentElement
-              if (row) {
-                const toggle = row.querySelector('button[role="switch"], input[type="checkbox"]') as HTMLElement | HTMLInputElement
-                if (toggle) {
-                  const isChecked = toggle.getAttribute('aria-checked') === 'true' || (toggle as HTMLInputElement).checked
-                  const shouldBeChecked = key === targetAction
-                  if (isChecked !== shouldBeChecked) {
-                    toggle.click()
-                  }
-                }
-              }
-            }
-          }
-
-          // Clean up by closing the menu if we opened it
-          if (openedMenuBtn) {
-            await new Promise((r) => setTimeout(r, 150))
-            openedMenuBtn.click()
-          }
-        } else {
-          console.warn(`[AuraPro] Extension toggle not found in DOM: ${targetText}`)
-        }
-      }, 50)
+    if (!targetLabels) {
+      console.warn(`[AuraPro] Unknown action: ${targetAction}`)
+      return
     }
+
+    // Retry logic: the Open WebUI DOM may not be fully ready
+    let attempts = 0
+    const maxAttempts = 8
+    const retryDelay = 300
+
+    const tryActivate = async () => {
+      attempts++
+      console.log(`[AuraPro] Extension activation attempt ${attempts}/${maxAttempts} for: ${targetAction}`)
+
+      // Helper: find an element by matching its text content against multiple labels
+      const findByLabels = (labels: string[]): HTMLElement | null => {
+        // Strategy 1: Walk all text nodes
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null)
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const text = node.nodeValue?.trim()
+          if (text && labels.some(l => text.toLowerCase().includes(l.toLowerCase()))) {
+            return node.parentElement
+          }
+        }
+        // Strategy 2: Check button/label/span/div elements
+        const elements = document.querySelectorAll('button, label, span, div, p')
+        for (const el of elements) {
+          const text = (el as HTMLElement).textContent?.trim()
+          if (text && labels.some(l => text.toLowerCase() === l.toLowerCase())) {
+            return el as HTMLElement
+          }
+        }
+        return null
+      }
+
+      // Try to find the target toggle directly
+      let targetEl = findByLabels(targetLabels)
+
+      // If not found, try opening the '+' / tools menu button near the chat input
+      if (!targetEl) {
+        const textarea = document.querySelector('textarea#chat-input, textarea[placeholder], div[contenteditable]')
+        if (textarea) {
+          const container = textarea.closest('form') || textarea.closest('[class*="chat"]') || textarea.parentElement?.parentElement?.parentElement
+          if (container) {
+            // Look for toolbar/menu buttons (usually the + button or tools button)
+            const buttons = Array.from(container.querySelectorAll('button')).filter(btn => {
+              // Filter for small icon-like buttons that might be menu toggles
+              const rect = btn.getBoundingClientRect()
+              return rect.width < 60 && rect.height < 60
+            })
+            for (const btn of buttons) {
+              btn.click()
+              await new Promise(r => setTimeout(r, 200))
+              targetEl = findByLabels(targetLabels)
+              if (targetEl) break
+              // Close the wrong menu
+              btn.click()
+              await new Promise(r => setTimeout(r, 100))
+            }
+          }
+        }
+      }
+
+      if (!targetEl) {
+        if (attempts < maxAttempts) {
+          console.log(`[AuraPro] Extension not found yet, retrying in ${retryDelay}ms...`)
+          setTimeout(tryActivate, retryDelay)
+        } else {
+          console.warn(`[AuraPro] Extension toggle not found after ${maxAttempts} attempts: ${targetAction}`)
+        }
+        return
+      }
+
+      console.log(`[AuraPro] Found extension element for: ${targetAction}`)
+
+      // Find the toggle switch associated with this label
+      // Walk up to find the row/container, then find the switch within it
+      const findToggle = (el: HTMLElement): HTMLElement | null => {
+        // Check increasingly broader parent containers
+        let current: HTMLElement | null = el
+        for (let depth = 0; depth < 5 && current; depth++) {
+          const row = current.closest('[class*="flex"], [class*="item"], [class*="row"], [class*="option"]') as HTMLElement
+          if (row) {
+            // Look for a switch/checkbox/toggle within this row
+            const toggle = row.querySelector(
+              'button[role="switch"], input[type="checkbox"], [class*="toggle"], [class*="switch"]'
+            ) as HTMLElement
+            if (toggle) return toggle
+          }
+          current = current.parentElement
+        }
+        return null
+      }
+
+      // Activate the target and deactivate others
+      for (const [key, labels] of Object.entries(actionLabels)) {
+        const el = findByLabels(labels)
+        if (!el) continue
+
+        const toggle = findToggle(el)
+        if (!toggle) continue
+
+        const isChecked = toggle.getAttribute('aria-checked') === 'true' 
+          || (toggle as HTMLInputElement).checked === true
+          || toggle.classList.contains('active')
+          || toggle.classList.contains('checked')
+        const shouldBeChecked = key === targetAction
+
+        if (isChecked !== shouldBeChecked) {
+          console.log(`[AuraPro] ${shouldBeChecked ? 'Enabling' : 'Disabling'}: ${key}`)
+          toggle.click()
+          await new Promise(r => setTimeout(r, 100))
+        }
+      }
+
+      console.log(`[AuraPro] Extension activation complete for: ${targetAction}`)
+    }
+
+    // Start after a brief delay to let the webview DOM stabilize
+    setTimeout(tryActivate, 100)
   }
 })
 

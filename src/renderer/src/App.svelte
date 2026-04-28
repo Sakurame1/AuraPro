@@ -46,9 +46,6 @@
       if (data.type === 'server:ready') {
         serverInfo.update((info) => ({ ...info, reachable: true, url: data.data?.url }))
       }
-      if (data.type === 'action:trigger') {
-        window.dispatchEvent(new CustomEvent('action:trigger', { detail: data.data }))
-      }
     })
 
     // Don't auto-install anything — the user must explicitly choose

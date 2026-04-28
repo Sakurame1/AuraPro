@@ -435,6 +435,7 @@
         const query = data.data.query
         const files = data.data.files
         const baseUrl = data.data.url ?? ''
+        const shortcutAction = data.data.shortcutAction ?? null
 
         if (!openConnections.has(connId)) {
           openConnections.set(connId, baseUrl)
@@ -448,7 +449,14 @@
 
         // Targeted delivery — wait a frame for the webview DOM to exist
         requestAnimationFrame(() => {
-          sendToWebview({ type: 'query', data: { query, files } }, connId)
+          // Activate extension BEFORE sending query, so Open WebUI processes with the right mode
+          if (shortcutAction) {
+            sendToWebview({ type: 'action:activate', data: { action: shortcutAction } }, connId)
+          }
+          // Small delay to let extension toggle before query arrives
+          setTimeout(() => {
+            sendToWebview({ type: 'query', data: { query, files } }, connId)
+          }, shortcutAction ? 500 : 0)
         })
         return
       }
@@ -457,6 +465,7 @@
       if (data.type === 'call' && data.data?.connectionId) {
         const connId = data.data.connectionId ?? ''
         const baseUrl = data.data.url ?? ''
+        const shortcutAction = data.data.shortcutAction ?? null
 
         if (!openConnections.has(connId)) {
           openConnections.set(connId, baseUrl)
@@ -470,7 +479,13 @@
 
         // Targeted delivery — wait a frame for the webview DOM to exist
         requestAnimationFrame(() => {
-          sendToWebview({ type: 'call' }, connId)
+          // Activate extension BEFORE starting call
+          if (shortcutAction) {
+            sendToWebview({ type: 'action:activate', data: { action: shortcutAction } }, connId)
+          }
+          setTimeout(() => {
+            sendToWebview({ type: 'call' }, connId)
+          }, shortcutAction ? 500 : 0)
         })
         return
       }

@@ -245,12 +245,6 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
       const text = CONFIG?.spotlightClipboardPaste !== false
         ? (clipboard.readText()?.trim() || '')
         : ''
-      
-      // Trigger optional action if configured
-      if (CONFIG?.shortcutActions?.spotlight) {
-        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.spotlight })
-      }
-      
       toggleSpotlight(text)
     })
   }
@@ -258,10 +252,6 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
   // Voice input shortcut – toggle microphone recording
   if (voiceInputAccel && CONFIG?.voiceInputEnabled !== false) {
     tryRegisterShortcut(voiceInputAccel, 'Voice Input', () => {
-      // Trigger optional action if configured
-      if (CONFIG?.shortcutActions?.voice) {
-        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.voice })
-      }
       toggleVoiceInput()
     })
   } else {
@@ -271,10 +261,6 @@ const registerShortcuts = (globalAccel?: string, spotlightAccel?: string, voiceI
   // Call shortcut – open the voice/video call overlay
   if (callAccel && CONFIG?.callEnabled !== false) {
     tryRegisterShortcut(callAccel, 'Call', () => {
-      // Trigger optional action if configured
-      if (CONFIG?.shortcutActions?.call) {
-        sendToRenderer('action:trigger', { action: CONFIG.shortcutActions.call })
-      }
       toggleCall()
     })
   } else {
@@ -588,7 +574,9 @@ async function toggleCall(): Promise<void> {
       url = url.replace('http://0.0.0.0', 'http://localhost')
     }
 
-    sendToRenderer('call', { connectionId: conn.id, url })
+    // Include shortcut action so the webview can activate the extension
+    const callAction = CONFIG?.shortcutActions?.call || null
+    sendToRenderer('call', { connectionId: conn.id, url, shortcutAction: callAction })
 
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.show()
@@ -1155,8 +1143,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.3.2',
-    version: '2.3.2',
+    applicationVersion: '2.4.0',
+    version: '2.4.0',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1530,7 +1518,9 @@ if (!gotTheLock) {
         dataUrl
       }))
 
-      sendToRenderer('query', { query, connectionId: conn.id, url, files })
+      // Include spotlight shortcut action so the webview can activate the extension
+      const spotlightAction = config.shortcutActions?.spotlight || null
+      sendToRenderer('query', { query, connectionId: conn.id, url, files, shortcutAction: spotlightAction })
 
       // Hide spotlight first (blur handler will restore main window)
       spotlightWindow?.hide()
@@ -1769,7 +1759,9 @@ if (!gotTheLock) {
         url = url.replace('http://0.0.0.0', 'http://localhost')
       }
 
-      sendToRenderer('query', { query: text.trim(), connectionId: conn.id, url })
+      // Include voice shortcut action so the webview can activate the extension
+      const voiceAction = config.shortcutActions?.voice || null
+      sendToRenderer('query', { query: text.trim(), connectionId: conn.id, url, shortcutAction: voiceAction })
 
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.show()

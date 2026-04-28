@@ -2,7 +2,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { execFileSync } from 'child_process'
+import { execFileSync, execSync } from 'child_process'
 
 import * as tar from 'tar'
 import * as pty from 'node-pty'
@@ -29,6 +29,170 @@ let logBuffer: string[] = []
 
 const lock = new ServiceLock('llamacpp')
 let binaryPath: string | null = null
+
+// ─── CUDA Toolkit Runtime (Windows only) ────────────────
+
+/**
+ * Check whether the required CUDA runtime DLLs are available on the system.
+ */
+const isCudaRuntimeInstalled = (): boolean => {
+  if (process.platform !== 'win32') return true
+
+  // 1. Check the standard CUDA Toolkit install locations (Strictly 13.2 or 13.1)
+  const cudaPaths = [
+    process.env.CUDA_PATH,
+    ...['13.2', '13.1'].map(
+      v => `C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v${v}\\bin`
+    )
+  ].filter(Boolean) as string[]
+
+  for (const dir of cudaPaths) {
+    const binDir = dir.endsWith('bin') ? dir : path.join(dir, 'bin')
+    try {
+      if (fs.existsSync(binDir)) {
+        const files = fs.readdirSync(binDir)
+        // Ensure it's specifically CUDA 13.x
+        const hasCudart = files.some(f => f.startsWith('cudart64_13'))
+        const hasCublas = files.some(f => f.startsWith('cublas64_13'))
+        if (hasCudart && hasCublas) {
+          log.info(`CUDA 13.x runtime found at: ${binDir}`)
+          return true
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Try to locate the DLLs via PATH using `where`
+  try {
+    const output = execSync('where cudart64_13*.dll', { stdio: 'pipe', timeout: 3000, encoding: 'utf8' })
+    if (output.trim()) {
+      log.info('CUDA 13.x runtime DLLs found in PATH')
+      return true
+    }
+  } catch {
+    // Not in PATH
+  }
+
+  log.info('CUDA runtime DLLs not found on the system')
+  return false
+}
+
+/**
+ * Ensure the CUDA Toolkit runtime libraries are installed.
+ * If missing, download the network installer and run it silently with
+ * only the minimum required subpackages (cudart + cublas).
+ */
+const ensureCudaRuntime = async (
+  onStatus?: (status: string) => void
+): Promise<void> => {
+  if (process.platform !== 'win32') return
+  if (isCudaRuntimeInstalled()) return
+
+  log.info('CUDA runtime not found — installing CUDA Toolkit (runtime only)…')
+  onStatus?.('Installing CUDA runtime libraries…')
+
+  const cacheDir = path.join(getInstallDir(), 'cuda-installer')
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true })
+  }
+
+  const installerPath = path.join(cacheDir, 'cuda_toolkit_network.exe')
+
+  // Download the CUDA Toolkit 13.2 network installer (~30 MB stub)
+  // The network installer downloads only the selected components.
+  const cudaInstallerUrl =
+    'https://developer.download.nvidia.com/compute/cuda/13.2.0/network_installers/cuda_13.2.0_windows_network.exe'
+
+  if (!fs.existsSync(installerPath)) {
+    onStatus?.('Downloading CUDA Toolkit installer…')
+    try {
+      await downloadFileWithProgress(cudaInstallerUrl, installerPath, (progress) => {
+        onStatus?.(`Downloading CUDA Toolkit… ${progress.toFixed(0)}%`)
+      })
+    } catch (error) {
+      log.error('Failed to download CUDA Toolkit installer:', error)
+      // Clean up partial download
+      try { if (fs.existsSync(installerPath)) fs.unlinkSync(installerPath) } catch {}
+      throw new Error(
+        `Failed to download CUDA Toolkit installer. Please install CUDA Toolkit manually from https://developer.nvidia.com/cuda-downloads — Error: ${error?.message ?? error}`
+      )
+    }
+  }
+
+  // Run the installer silently with only runtime + cuBLAS subpackages.
+  // -s = silent, -n = no reboot.
+  // The subpackages ensure we don't install the full dev toolkit (saves time & space).
+  onStatus?.('Installing CUDA runtime (this may take a few minutes)…')
+  log.info('Running CUDA Toolkit silent installer:', installerPath)
+
+  try {
+    execSync(
+      `"${installerPath}" -s cudart_13.2 cublas_13.2 -n`,
+      {
+        timeout: 600000, // 10 minutes max
+        stdio: 'pipe',
+        windowsHide: true
+      }
+    )
+    log.info('CUDA Toolkit silent install completed')
+  } catch (error) {
+    log.error('CUDA Toolkit silent install failed:', error)
+    // Try a more permissive install with the full runtime
+    try {
+      log.info('Retrying CUDA install with full runtime…')
+      execSync(
+        `"${installerPath}" -s -n`,
+        {
+          timeout: 900000, // 15 minutes for full install
+          stdio: 'pipe',
+          windowsHide: true
+        }
+      )
+      log.info('CUDA Toolkit full silent install completed')
+    } catch (retryError) {
+      log.error('CUDA Toolkit full install also failed:', retryError)
+      throw new Error(
+        'Failed to install CUDA Toolkit automatically. ' +
+        'Please install CUDA Toolkit manually from https://developer.nvidia.com/cuda-downloads ' +
+        'and restart AuraPro.'
+      )
+    }
+  }
+
+  // Verify installation succeeded
+  if (!isCudaRuntimeInstalled()) {
+    // The DLLs might be installed but not yet in PATH — try to locate and update PATH for this session
+    const cudaBinPaths = ['13.2', '13.1'].map(
+      v => `C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v${v}\\bin`
+    )
+    for (const binPath of cudaBinPaths) {
+      try {
+        if (fs.existsSync(binPath)) {
+          const files = fs.readdirSync(binPath)
+          if (files.some(f => f.startsWith('cudart64_13'))) {
+            log.info(`Adding CUDA bin to PATH for this session: ${binPath}`)
+            process.env.PATH = `${binPath};${process.env.PATH}`
+            break
+          }
+        }
+      } catch {}
+    }
+
+    if (!isCudaRuntimeInstalled()) {
+      log.warn('CUDA runtime still not detected after installation — llama-server may fail to start')
+      onStatus?.('Warning: CUDA runtime installation may require a restart')
+    }
+  }
+
+  // Clean up installer to save disk space
+  try {
+    fs.unlinkSync(installerPath)
+    fs.rmdirSync(cacheDir, { recursive: true })
+  } catch {}
+
+  onStatus?.('CUDA runtime ready')
+  log.info('CUDA runtime installation complete')
+}
 
 // ─── Public Getters ─────────────────────────────────────
 
@@ -257,6 +421,11 @@ export const setupLlamaCpp = async (
   const cacheBase = path.join(getInstallDir(), 'llama.cpp')
   if (!fs.existsSync(cacheBase)) {
     fs.mkdirSync(cacheBase, { recursive: true })
+  }
+
+  // ── Ensure CUDA runtime is installed for CUDA variants (Windows) ──
+  if (variant.startsWith('cuda') && process.platform === 'win32') {
+    await ensureCudaRuntime(onStatus)
   }
 
   // ── Check for existing cached binary before any network request ──
@@ -543,16 +712,39 @@ export const startLlamaCpp = async (
 
   log.info('Starting llama-server:', binary, commandArgs.join(' '))
 
+  // Ensure CUDA DLLs are discoverable (Windows) — the installer may have
+  // placed them outside the current process PATH.
+  let spawnEnv = { ...process.env, ...(config.envVars ?? {}) }
+  if (process.platform === 'win32') {
+    const variant = resolveVariant(llamaConfig.variant)
+    if (variant.startsWith('cuda')) {
+      // Strictly restrict to CUDA 13.x versions (13.1 or 13.2)
+      const cudaVersions = ['13.2', '13.1']
+      for (const v of cudaVersions) {
+        const cudaBin = `C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v${v}\\bin`
+        try {
+          if (fs.existsSync(cudaBin)) {
+            const files = fs.readdirSync(cudaBin)
+            if (files.some(f => f.startsWith('cudart64_13'))) {
+              if (!spawnEnv.PATH?.includes(cudaBin)) {
+                spawnEnv.PATH = `${cudaBin};${spawnEnv.PATH}`
+                log.info(`Added CUDA ${v} bin to llama-server PATH: ${cudaBin}`)
+              }
+              break
+            }
+          }
+        } catch {}
+      }
+    }
+  }
+
   let spawned: pty.IPty
   try {
     spawned = pty.spawn(binary, commandArgs, {
       name: 'xterm-256color',
       cols: 200,
       rows: 50,
-      env: {
-        ...process.env,
-        ...(config.envVars ?? {})
-      }
+      env: spawnEnv
     })
   } catch (error) {
     status = 'failed'
