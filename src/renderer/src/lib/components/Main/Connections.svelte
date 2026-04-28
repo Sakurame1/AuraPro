@@ -449,14 +449,7 @@
 
         // Targeted delivery — wait a frame for the webview DOM to exist
         requestAnimationFrame(() => {
-          // Activate extension BEFORE sending query, so Open WebUI processes with the right mode
-          if (shortcutAction) {
-            sendToWebview({ type: 'action:activate', data: { action: shortcutAction } }, connId)
-          }
-          // Small delay to let extension toggle before query arrives
-          setTimeout(() => {
-            sendToWebview({ type: 'query', data: { query, files } }, connId)
-          }, shortcutAction ? 500 : 0)
+          sendToWebview({ type: 'query', data: { query, files } }, connId)
         })
         return
       }
@@ -479,13 +472,7 @@
 
         // Targeted delivery — wait a frame for the webview DOM to exist
         requestAnimationFrame(() => {
-          // Activate extension BEFORE starting call
-          if (shortcutAction) {
-            sendToWebview({ type: 'action:activate', data: { action: shortcutAction } }, connId)
-          }
-          setTimeout(() => {
-            sendToWebview({ type: 'call' }, connId)
-          }, shortcutAction ? 500 : 0)
+          sendToWebview({ type: 'call' }, connId)
         })
         return
       }
