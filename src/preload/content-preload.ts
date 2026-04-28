@@ -125,21 +125,33 @@ ipcRenderer.on('desktop:event', (_event, data) => {
         return null
       }
 
-      const toggle = findToggle(targetEl)
-      if (toggle) {
+      // Activate the target and deactivate others
+      for (const [key, labels] of Object.entries(actionLabels)) {
+        const el = findByLabels(labels)
+        if (!el) continue
+
+        const toggle = findToggle(el)
+        if (!toggle) {
+          if (key === targetAction) {
+            console.warn(`[AuraPro] Found label for ${targetAction} but could not find its switch/checkbox.`)
+          }
+          continue
+        }
+
         const isChecked = toggle.getAttribute('aria-checked') === 'true' 
           || (toggle as HTMLInputElement).checked === true
           || toggle.classList.contains('active')
           || toggle.classList.contains('bg-primary')
 
-        if (!isChecked) {
-          console.log(`[AuraPro] Enabling target extension: ${targetAction}`)
+        const shouldBeChecked = key === targetAction
+
+        if (isChecked !== shouldBeChecked) {
+          console.log(`[AuraPro] ${shouldBeChecked ? 'Enabling' : 'Disabling'} extension: ${key}`)
           toggle.click()
+          await new Promise(r => setTimeout(r, 150)) // wait slightly for UI to react
         } else {
-          console.log(`[AuraPro] Target extension already enabled: ${targetAction}`)
+          console.log(`[AuraPro] Extension ${key} is already in the correct state (${isChecked ? 'enabled' : 'disabled'})`)
         }
-      } else {
-        console.warn(`[AuraPro] Found label for ${targetAction} but could not find its switch/checkbox.`)
       }
 
       console.log(`[AuraPro] Extension activation complete for: ${targetAction}`)
