@@ -130,11 +130,11 @@ const ensureCudaRuntime = async (
   log.info('Running CUDA Toolkit silent installer:', installerPath)
 
   try {
-    await execAsync(`"${installerPath}" -s -n cudart_13.2 cublas_13.2`, {
-      timeout: 600000, // 10 minutes max
+    await execAsync(`"${installerPath}" -s -n`, {
+      timeout: 1200000, // 20 minutes max for full install
       windowsHide: true
     })
-    log.info('CUDA Toolkit silent install completed')
+    log.info('CUDA Toolkit full silent install completed')
   } catch (error) {
     log.error('CUDA Toolkit silent install failed:', error)
     // The installer sometimes returns a non-zero exit code even when successful (e.g. reboot required)
