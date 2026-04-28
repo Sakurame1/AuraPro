@@ -198,8 +198,14 @@ export const downloadModel = async (
 
   // Already downloaded?
   if (fs.existsSync(destPath)) {
-    log.info(`[huggingface] Already cached: ${destPath}`)
-    return destPath
+    const stat = fs.statSync(destPath)
+    if (stat.size === 0 || (expectedSize && stat.size !== expectedSize)) {
+      log.warn(`[huggingface] Found invalid cached file, deleting: ${destPath}`)
+      try { fs.unlinkSync(destPath) } catch {}
+    } else {
+      log.info(`[huggingface] Already cached: ${destPath}`)
+      return destPath
+    }
   }
 
   // Build download URL

@@ -16,6 +16,10 @@ import {
   downloadFileWithProgress
 } from './index'
 
+import { promisify } from 'util'
+import { exec } from 'child_process'
+const execAsync = promisify(exec)
+
 import { getModelsDir } from './huggingface'
 import { ServiceLock, isProcessAlive } from './service-lock'
 
@@ -126,28 +130,20 @@ const ensureCudaRuntime = async (
   log.info('Running CUDA Toolkit silent installer:', installerPath)
 
   try {
-    execSync(
-      `"${installerPath}" -s cudart_13.2 cublas_13.2 -n`,
-      {
-        timeout: 600000, // 10 minutes max
-        stdio: 'pipe',
-        windowsHide: true
-      }
-    )
+    await execAsync(`"${installerPath}" -s cudart_13.2 cublas_13.2 -n`, {
+      timeout: 600000, // 10 minutes max
+      windowsHide: true
+    })
     log.info('CUDA Toolkit silent install completed')
   } catch (error) {
     log.error('CUDA Toolkit silent install failed:', error)
     // Try a more permissive install with the full runtime
     try {
       log.info('Retrying CUDA install with full runtime…')
-      execSync(
-        `"${installerPath}" -s -n`,
-        {
-          timeout: 900000, // 15 minutes for full install
-          stdio: 'pipe',
-          windowsHide: true
-        }
-      )
+      await execAsync(`"${installerPath}" -s -n`, {
+        timeout: 900000, // 15 minutes for full install
+        windowsHide: true
+      })
       log.info('CUDA Toolkit full silent install completed')
     } catch (retryError) {
       log.error('CUDA Toolkit full install also failed:', retryError)
@@ -188,6 +184,16 @@ const ensureCudaRuntime = async (
   try {
     fs.unlinkSync(installerPath)
     fs.rmdirSync(cacheDir, { recursive: true })
+  } catch {}
+
+  // Clean up extra NVIDIA installer cache
+  try {
+    const tempCuda1 = 'C:\\Temp\\CUDA'
+    if (fs.existsSync(tempCuda1)) fs.rmSync(tempCuda1, { recursive: true, force: true })
+  } catch {}
+  try {
+    const tempCuda2 = process.env.TEMP ? path.join(process.env.TEMP, 'CUDA') : ''
+    if (tempCuda2 && fs.existsSync(tempCuda2)) fs.rmSync(tempCuda2, { recursive: true, force: true })
   } catch {}
 
   onStatus?.('CUDA runtime ready')
