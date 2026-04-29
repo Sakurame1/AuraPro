@@ -95,7 +95,7 @@ import iconIco from '../../resources/AuraPro.ico?asset'
 
 const icon = process.platform === 'win32' ? iconIco : iconPng
 
-import { existsSync, writeFileSync, unlinkSync } from 'fs'
+import { existsSync, writeFileSync, unlinkSync, cpSync } from 'fs'
 
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('no-sandbox')
@@ -891,7 +891,8 @@ const startServerHandler = async (): Promise<boolean> => {
     CONFIG = await getConfig()
     const { url, pid } = await startServer(
       CONFIG?.localServer?.serveOnLocalNetwork ?? false,
-      CONFIG?.localServer?.port ?? null
+      CONFIG?.localServer?.port ?? null,
+      (status: string) => sendToRenderer('status:server', status)
     )
     SERVER_URL = url
     SERVER_PID = pid
@@ -1135,14 +1136,38 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.4.0',
-    version: '2.4.0',
+    applicationVersion: '2.5.0',
+    version: '2.5.0',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
 
   app.whenReady().then(async () => {
     CONFIG = await getConfig()
+
+    // ─── Data Migration (One-time force overwrite for v2) ──
+    if (CONFIG.version < 2) {
+      log.info(`Migrating app from version ${CONFIG.version} to 2 (forcing data overwrite)...`)
+      try {
+        const packagedDataDir = app.isPackaged
+          ? join(process.resourcesPath, 'data')
+          : join(app.getAppPath(), 'data')
+        const targetDataDir = join(getUserDataPath(), 'data')
+
+        if (existsSync(packagedDataDir)) {
+          // cpSync with recursive: true will overwrite existing files from source to destination
+          cpSync(packagedDataDir, targetDataDir, { recursive: true, force: true })
+          log.info('Successfully force-overwrote data folder for version 2 update')
+        }
+
+        // Persist the migration status
+        await setConfig({ version: 2, dataVersion: 2 })
+        CONFIG = await getConfig()
+      } catch (e) {
+        log.error('Data migration failed:', e)
+      }
+    }
+
     loadSpotlightPosition()
     log.info('Config:', CONFIG)
 
@@ -1344,7 +1369,7 @@ if (!gotTheLock) {
             : join(app.getAppPath(), 'data')
           const targetDataDir = join(getUserDataPath(), 'data')
           if (existsSync(packagedDataDir)) {
-            require('fs').cpSync(packagedDataDir, targetDataDir, { recursive: true })
+            cpSync(packagedDataDir, targetDataDir, { recursive: true })
             log.info('Copied bundled data to', targetDataDir)
           }
         } catch (e) {

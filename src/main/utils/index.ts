@@ -97,6 +97,103 @@ export const getOpenWebUIDataPath = (): string => {
   return path.normalize(openWebUIDataDir)
 }
 
+export const getFfmpegDir = (): string => {
+  const pythonDir = getPythonInstallationDir()
+  if (process.platform === 'win32') {
+    return path.join(pythonDir, 'Scripts')
+  }
+  return path.join(pythonDir, 'bin')
+}
+
+export const getFfmpegPath = (): string => {
+  const ext = process.platform === 'win32' ? '.exe' : ''
+  return path.join(getFfmpegDir(), `ffmpeg${ext}`)
+}
+
+export const isFfmpegInstalled = (): boolean => {
+  // 1. Check in our custom install directory first (preferred)
+  if (fs.existsSync(getFfmpegPath())) {
+    try {
+      execSync(`"${getFfmpegPath()}" -version`, { stdio: 'ignore' })
+      return true
+    } catch {}
+  }
+
+  // 2. Check in system PATH
+  try {
+    const cmd = process.platform === 'win32' ? 'where' : 'which'
+    execSync(`${cmd} ffmpeg`, { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export const installFfmpeg = async (onStatus?: (status: string) => void): Promise<boolean> => {
+  const platform = process.platform
+  const arch = process.arch
+
+  let binaryName = ''
+  if (platform === 'darwin') {
+    binaryName = arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64'
+  } else if (platform === 'linux') {
+    binaryName = arch === 'arm64' ? 'linux-arm64' : 'linux-x64'
+  } else if (platform === 'win32') {
+    binaryName = 'win32-x64' // Windows ARM64 runs x64 via emulation if native not available
+  } else {
+    throw new Error(`Unsupported platform for ffmpeg auto-install: ${platform}`)
+  }
+
+  const url = `https://github.com/eugeneware/ffmpeg-static/releases/download/b5.0.1/${binaryName}.gz`
+  const downloadPath = path.join(os.tmpdir(), `ffmpeg-${binaryName}.gz`)
+  const targetPath = getFfmpegPath()
+
+  try {
+    onStatus?.('Downloading ffmpeg...')
+    log.info(`Downloading ffmpeg from ${url}`)
+    await downloadFileWithProgress(url, downloadPath, (progress) => {
+      onStatus?.(`Downloading ffmpeg... ${Math.floor(progress)}%`)
+    })
+
+    onStatus?.('Extracting ffmpeg...')
+    log.info(`Extracting ffmpeg to ${targetPath}`)
+
+    const ffmpegDir = getFfmpegDir()
+    if (!fs.existsSync(ffmpegDir)) {
+      fs.mkdirSync(ffmpegDir, { recursive: true })
+    }
+    
+    const { createGunzip } = require('zlib')
+    const { pipeline } = require('stream/promises')
+    const { createReadStream, createWriteStream } = require('fs')
+
+    await pipeline(
+      createReadStream(downloadPath),
+      createGunzip(),
+      createWriteStream(targetPath)
+    )
+
+    if (platform !== 'win32') {
+      fs.chmodSync(targetPath, 0o755)
+    }
+
+    log.info('ffmpeg installed successfully')
+    try { fs.unlinkSync(downloadPath) } catch {}
+    return true
+  } catch (error: any) {
+    log.error('ffmpeg installation failed:', error)
+    try { if (fs.existsSync(downloadPath)) fs.unlinkSync(downloadPath) } catch {}
+    throw new Error(`Failed to install ffmpeg: ${error.message}`)
+  }
+}
+
+export const ensureFfmpeg = async (onStatus?: (status: string) => void): Promise<void> => {
+  if (!isFfmpegInstalled()) {
+    log.info('ffmpeg not found, initiating install...')
+    await installFfmpeg(onStatus)
+  }
+}
+
 export const openUrl = (url: string) => {
   if (!url) {
     throw new Error('No URL provided to open in browser.')
@@ -602,7 +699,8 @@ export const getServerPty = (pid: number): pty.IPty | undefined => serverPtyProc
 
 export const startServer = async (
   expose = false,
-  port = null
+  port = null,
+  onStatus?: (status: string) => void
 ): Promise<{ url: string; pid: number }> => {
   await stopAllServers()
   const config = await getConfig()
@@ -610,6 +708,13 @@ export const startServer = async (
   const host = expose ? '0.0.0.0' : '127.0.0.1'
   if (!isPythonInstalled()) throw new Error('Python is not installed')
   if (!isPackageInstalled('open-webui')) throw new Error('open-webui package is not installed')
+
+  // Ensure ffmpeg is available
+  try {
+    await ensureFfmpeg(onStatus)
+  } catch (err) {
+    log.warn('Failed to ensure ffmpeg (non-fatal, but some features may not work):', err)
+  }
 
   const pythonPath = getPythonPath()
   log.info(`Using Python at: ${pythonPath}`)
@@ -651,6 +756,7 @@ export const startServer = async (
         PYTHONUNBUFFERED: '1',
         ENABLE_LLAMA_CPP: 'False',
         ENABLE_OLLAMA: 'False',
+        USER_AGENT: 'AuraPro Desktop', // Suppress langchain warning
         ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
       }
     })
@@ -858,6 +964,7 @@ export interface Connection {
 
 export interface AppConfig {
   version: number
+  dataVersion: number
   defaultConnectionId: string | null
   connections: Connection[]
   runInBackground: boolean
@@ -901,7 +1008,8 @@ export interface AppConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  version: 1,
+  version: 2,
+  dataVersion: 2,
   defaultConnectionId: null,
   connections: [],
   runInBackground: true,
