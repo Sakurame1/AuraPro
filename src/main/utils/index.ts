@@ -756,6 +756,8 @@ export const startServer = async (
         PYTHONUNBUFFERED: '1',
         ENABLE_LLAMA_CPP: 'False',
         ENABLE_OLLAMA: 'False',
+        RAG_EMBEDDING_MODEL_DEVICE_TYPE: 'cpu',
+        RAG_RERANKING_MODEL_DEVICE_TYPE: 'cpu',
         USER_AGENT: 'AuraPro Desktop', // Suppress langchain warning
         ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
       }
@@ -1008,8 +1010,8 @@ export interface AppConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  version: 2,
-  dataVersion: 2,
+  version: 2.1,
+  dataVersion: 2.1,
   defaultConnectionId: null,
   connections: [],
   runInBackground: true,

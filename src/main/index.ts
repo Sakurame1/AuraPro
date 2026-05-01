@@ -900,6 +900,18 @@ const startServerHandler = async (): Promise<boolean> => {
     log.info('Server started:', SERVER_URL, SERVER_PID)
     sendToRenderer('status:server', SERVER_STATUS)
 
+    // Handle unexpected exit
+    const pty = getServerPty(pid)
+    pty?.onExit(({ exitCode, signal }) => {
+      if (SERVER_PID === pid) {
+        log.error(`Server process ${pid} exited unexpectedly: code=${exitCode}, signal=${signal}`)
+        SERVER_STATUS = 'stopped'
+        SERVER_REACHABLE = false
+        sendToRenderer('status:server', SERVER_STATUS)
+        updateTray()
+      }
+    })
+
     // Auto-push PTY port so an already-open log panel picks up live output
     connectPtyPort(pid)
     updateTray()
@@ -1136,8 +1148,8 @@ if (!gotTheLock) {
   app.setAboutPanelOptions({
     applicationName: 'AuraPro',
     iconPath: icon,
-    applicationVersion: '2.5.0',
-    version: '2.5.0',
+    applicationVersion: '2.5.1',
+    version: '2.5.1',
     website: 'https://aurapro.site',
     copyright: `© ${new Date().getFullYear()} AuraPro`
   })
@@ -1145,9 +1157,9 @@ if (!gotTheLock) {
   app.whenReady().then(async () => {
     CONFIG = await getConfig()
 
-    // ─── Data Migration (One-time force overwrite for v2) ──
-    if (CONFIG.version < 2) {
-      log.info(`Migrating app from version ${CONFIG.version} to 2 (forcing data overwrite)...`)
+    // ─── Data Migration (One-time force overwrite for v2.1) ──
+    if (CONFIG.version < 2.1) {
+      log.info(`Migrating app from version ${CONFIG.version} to 2.1 (forcing data overwrite)...`)
       try {
         const packagedDataDir = app.isPackaged
           ? join(process.resourcesPath, 'data')
@@ -1157,11 +1169,11 @@ if (!gotTheLock) {
         if (existsSync(packagedDataDir)) {
           // cpSync with recursive: true will overwrite existing files from source to destination
           cpSync(packagedDataDir, targetDataDir, { recursive: true, force: true })
-          log.info('Successfully force-overwrote data folder for version 2 update')
+          log.info('Successfully force-overwrote data folder for version 2.1 update')
         }
 
         // Persist the migration status
-        await setConfig({ version: 2, dataVersion: 2 })
+        await setConfig({ version: 2.1, dataVersion: 2.1 })
         CONFIG = await getConfig()
       } catch (e) {
         log.error('Data migration failed:', e)
