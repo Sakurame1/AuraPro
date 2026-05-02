@@ -104,10 +104,12 @@ if (process.platform === 'linux') {
   // 此标志告诉 Chromium 使用 /tmp 作为共享内存，避免由于 FUSE 挂载限制导致的崩溃
   app.commandLine.appendSwitch('disable-dev-shm-usage')
 
-  // Use the native Wayland backend when available instead of XWayland.
-  // This is required for xdg-desktop-portal features like GlobalShortcuts
-  // to work (the portal is enabled by default in Chromium 134+ / Electron 33+).
-  app.commandLine.appendSwitch('ozone-platform-hint', 'auto')
+  // Force XWayland (x11) instead of native Wayland.
+  // When GPU acceleration is disabled (--disable-gpu), Chromium's software compositor
+  // cannot properly share buffers with <webview> guests under native Wayland, resulting
+  // in a permanent grey/blank screen for Open WebUI. Forcing X11 resolves this (#119).
+  // Note: This may affect Wayland-native GlobalShortcuts, but rendering takes priority.
+  app.commandLine.appendSwitch('ozone-platform-hint', 'x11')
 
   // Disable GPU entirely to prevent shared memory crash and grey screen on
   // Linux systems with problematic Intel/NVIDIA drivers or certain Wayland
@@ -1265,6 +1267,10 @@ if (!gotTheLock) {
 
     // Log webview guest renderer crashes for diagnostics — the existing
     // 'crashed' listener in Content.svelte surfaces these to the user.
+    //
+    // For webview guests we also intercept navigation and popup events
+    // so that external links open in the user's default browser instead
+    // of navigating the webview or spawning a new Electron window (#165).
     app.on('web-contents-created', (_event, contents) => {
       contents.on('render-process-gone', (_e, details) => {
         if (details.reason !== 'clean-exit') {
@@ -1274,6 +1280,85 @@ if (!gotTheLock) {
           )
         }
       })
+
+      if (contents.getType() === 'webview') {
+        // ── Popups (target="_blank" links) → open in default browser ──
+        contents.setWindowOpenHandler(({ url }) => {
+          openUrl(url)
+          return { action: 'deny' }
+        })
+
+        // ── In-page navigation to a different origin → open externally ──
+        // This catches regular link clicks (no target) that would navigate
+        // the webview away from the Open WebUI instance.
+        contents.on('will-navigate', (event, url) => {
+          try {
+            const currentOrigin = new URL(contents.getURL()).origin
+            const targetOrigin = new URL(url).origin
+            if (targetOrigin !== currentOrigin) {
+              event.preventDefault()
+              openUrl(url)
+            }
+          } catch {
+            // Malformed URL — let it through so Chromium can handle/reject it
+          }
+        })
+
+        // ── Native right-click context menu (#161) ──────────────────
+        // Electron <webview> guests don't show a context menu by default,
+        // which blocks right-click → Paste / Autofill / password-manager
+        // integration on login pages.  Build a native menu with standard
+        // editing actions, spell-check suggestions, and link handling.
+        contents.on('context-menu', (_event, params) => {
+          const menuItems: Electron.MenuItemConstructorOptions[] = []
+
+          // Spell-check suggestions (if any)
+          if (params.misspelledWord && params.dictionarySuggestions?.length) {
+            for (const suggestion of params.dictionarySuggestions) {
+              menuItems.push({
+                label: suggestion,
+                click: () => contents.replaceMisspelling(suggestion)
+              })
+            }
+            menuItems.push({ type: 'separator' })
+          }
+
+          // Link handling
+          if (params.linkURL) {
+            menuItems.push({
+              label: 'Open Link in Browser',
+              click: () => openUrl(params.linkURL)
+            })
+            menuItems.push({
+              label: 'Copy Link',
+              click: () => clipboard.writeText(params.linkURL)
+            })
+            menuItems.push({ type: 'separator' })
+          }
+
+          // Editable field actions (input, textarea, contenteditable)
+          if (params.isEditable) {
+            menuItems.push(
+              { label: 'Undo', role: 'undo', enabled: params.editFlags.canUndo },
+              { label: 'Redo', role: 'redo', enabled: params.editFlags.canRedo },
+              { type: 'separator' },
+              { label: 'Cut', role: 'cut', enabled: params.editFlags.canCut },
+              { label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy },
+              { label: 'Paste', role: 'paste', enabled: params.editFlags.canPaste },
+              { label: 'Select All', role: 'selectAll', enabled: params.editFlags.canSelectAll }
+            )
+          } else if (params.selectionText) {
+            // Non-editable text selection
+            menuItems.push(
+              { label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy }
+            )
+          }
+
+          if (menuItems.length > 0) {
+            Menu.buildFromTemplate(menuItems).popup()
+          }
+        })
+      }
     })
 
     app.on('browser-window-created', (_, window) => {

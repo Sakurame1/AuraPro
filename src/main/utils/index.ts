@@ -466,10 +466,7 @@ export const installPython = async (installationDir?: string, onStatus?: (status
         ['-m', 'pip', 'install', 'uv'],
         {
           encoding: 'utf-8',
-          env: {
-            ...process.env,
-            ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-          }
+          env: pythonEnv()
         },
         (error, stdout, stderr) => {
           if (error) {
@@ -498,6 +495,38 @@ export const getPythonExecutablePath = (envPath: string) => {
   return path.normalize(path.join(envPath, 'bin', 'python'))
 }
 
+/**
+ * Build a process environment suitable for running the bundled Python.
+ *
+ * On Windows the standalone Python distribution ships its own OpenSSL DLLs
+ * (`libssl-3-x64.dll`, `libcrypto-3-x64.dll`) next to `python.exe`.  If a
+ * different OpenSSL installation (Git for Windows, Anaconda, Strawberry Perl,
+ * etc.) appears earlier on the system `PATH`, Python picks up those mismatched
+ * DLLs at load-time, which causes the fatal error:
+ *
+ *     OPENSSL_Uplink(..., 08): no OPENSSL_Applink
+ *
+ * To prevent this we prepend the Python installation directory to `PATH` so
+ * Windows finds the correct DLLs first.  On non-Windows platforms this is a
+ * harmless no-op.
+ *
+ * Any additional env overrides (e.g. `configEnvVars`) can be spread after
+ * calling this helper.
+ */
+const pythonEnv = (extra: Record<string, string> = {}): Record<string, string> => {
+  const base: Record<string, string> = { ...process.env }
+
+  if (process.platform === 'win32') {
+    // python.exe lives at the root of the installation directory on Windows
+    const pythonDir = getPythonInstallationDir()
+    const currentPath = process.env['PATH'] || process.env['Path'] || ''
+    base['PATH'] = `${pythonDir};${currentPath}`
+    base['PYTHONIOENCODING'] = 'utf-8'
+  }
+
+  return { ...base, ...extra }
+}
+
 export const getPythonPath = (installationDir?: string) => {
   return path.normalize(getPythonExecutablePath(installationDir || getPythonInstallationDir()))
 }
@@ -510,10 +539,7 @@ export const isPythonInstalled = (installationDir?: string) => {
   try {
     const pythonVersion = execFileSync(pythonPath, ['--version'], {
       encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+      env: pythonEnv()
     })
     log.info('Installed Python Version:', pythonVersion.trim())
     return true
@@ -527,10 +553,7 @@ export const isUvInstalled = (installationDir?: string) => {
   try {
     const result = execFileSync(pythonPath, ['-m', 'uv', '--version'], {
       encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+      env: pythonEnv()
     })
     log.info('Installed uv Version:', result.trim())
     return true
@@ -580,10 +603,7 @@ export const installPackage = (packageName: string, version?: string, onStatus?:
         ...(version ? [`${packageName}==${version}`] : [packageName, '-U'])
       ],
       {
-        env: {
-          ...process.env,
-          ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-        }
+        env: pythonEnv()
       }
     )
 
@@ -638,10 +658,7 @@ export const isPackageInstalled = (packageName: string): boolean => {
   try {
     const info = execFileSync(pythonPath, ['-m', 'uv', 'pip', 'show', packageName], {
       encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+      env: pythonEnv()
     })
     return info.includes(`Name: ${packageName}`)
   } catch {
@@ -655,10 +672,7 @@ export const getPackageVersion = (packageName: string): string | null => {
   try {
     const info = execFileSync(pythonPath, ['-m', 'uv', 'pip', 'show', packageName], {
       encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+      env: pythonEnv()
     })
     const match = info.match(/^Version:\s*(.+)$/m)
     return match ? match[1].trim() : null
@@ -673,10 +687,7 @@ export const uninstallPackage = (packageName: string): boolean => {
   try {
     execFileSync(pythonPath, ['-m', 'uv', 'pip', 'uninstall', packageName], {
       encoding: 'utf-8',
-      env: {
-        ...process.env,
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+      env: pythonEnv()
     })
     log.info(`Uninstalled package: ${packageName}`)
     return true
@@ -748,8 +759,7 @@ export const startServer = async (
       name: 'xterm-256color',
       cols: 200,
       rows: 50,
-      env: {
-        ...process.env,
+      env: pythonEnv({
         ...(configEnvVars ?? {}),
         DATA_DIR: dataDir,
         WEBUI_SECRET_KEY: secretKey,
@@ -758,9 +768,8 @@ export const startServer = async (
         ENABLE_OLLAMA: 'False',
         RAG_EMBEDDING_MODEL_DEVICE_TYPE: 'cpu',
         RAG_RERANKING_MODEL_DEVICE_TYPE: 'cpu',
-        USER_AGENT: 'AuraPro Desktop', // Suppress langchain warning
-        ...(process.platform === 'win32' ? { PYTHONIOENCODING: 'utf-8' } : {})
-      }
+        USER_AGENT: 'AuraPro Desktop' // Suppress langchain warning
+      })
     })
   } catch (error) {
     throw new Error(
